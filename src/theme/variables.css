@@ -1,0 +1,102 @@
+/* === BRAND === */
+:root {
+  --ion-color-primary: #1B3A6B;
+  --ion-color-primary-rgb: 27,58,107;
+  --ion-color-primary-contrast: #ffffff;
+  --ion-color-primary-shade: #182f56;
+  --ion-color-primary-tint: #324e7a;
+
+  --ion-color-secondary: #F59E0B;
+  --ion-color-secondary-rgb: 245,158,11;
+  --ion-color-secondary-contrast: #000000;
+  --ion-color-secondary-shade: #d8880a;
+  --ion-color-secondary-tint: #f6a823;
+
+  --ion-color-tertiary: #10B981;
+  --ion-color-tertiary-rgb: 16,185,129;
+  --ion-color-tertiary-contrast: #ffffff;
+
+  --ion-color-success: #10B981;
+  --ion-color-warning: #F59E0B;
+  --ion-color-danger: #EF4444;
+
+  --ion-background-color: #F8FAFC;
+  --ion-background-color-rgb: 248,250,252;
+  --ion-text-color: #0F172A;
+  --ion-text-color-rgb: 15,23,42;
+
+  /* Custom tokens */
+  --diagnex-surface: rgba(255,255,255,0.72);
+  --diagnex-glass: rgba(255,255,255,0.72);
+  --diagnex-blur: blur(16px);
+  --diagnex-border: rgba(27,58,107,0.12);
+  --diagnex-shadow: 0 4px 24px rgba(27,58,107,0.08);
+  --diagnex-shadow-lg: 0 12px 48px rgba(27,58,107,0.18);
+  --diagnex-radius: 16px;
+  --diagnex-radius-modal: 24px;
+  --diagnex-radius-sm: 12px;
+
+  /* Severity colors */
+  --severity-low: #10B981;
+  --severity-medium: #F59E0B;
+  --severity-high: #EF4444;
+  --severity-critical: #7C3AED;
+
+  /* Typography */
+  --ion-font-family: 'DM Sans', sans-serif;
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+/* Google Fonts import */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Fraunces:ital,wght@0,300;0,700;1,300&family=JetBrains+Mono:wght@400;600&display=swap');
+
+/* Global surface style */
+ion-card {
+  border-radius: var(--diagnex-radius) !important;
+  box-shadow: var(--diagnex-shadow) !important;
+  background: var(--diagnex-surface) !important;
+  backdrop-filter: var(--diagnex-blur);
+  border: 1px solid var(--diagnex-border);
+}
+
+ion-modal {
+  --border-radius: var(--diagnex-radius-modal);
+}
+
+ion-toolbar {
+  --background: rgba(240,244,248,0.92);
+  --border-color: transparent;
+  backdrop-filter: var(--diagnex-blur);
+}
+
+ion-tab-bar {
+  --background: rgba(255,255,255,0.92);
+  --border: none;
+  backdrop-filter: var(--diagnex-blur);
+  box-shadow: 0 -4px 24px rgba(27,58,107,0.08);
+  border-radius: 24px 24px 0 0;
+}
+
+/* Pulse animation for vitals */
+@keyframes pulse-dot {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.4); opacity: 0.7; }
+}
+
+/* Severity badge pulse */
+@keyframes severity-pulse {
+  0% { box-shadow: 0 0 0 0 currentColor; }
+  70% { box-shadow: 0 0 0 8px transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+
+/* Fade + slide in */
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-in {
+  animation: fadeSlideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
