@@ -212,7 +212,7 @@ const ChatBot: React.FC = () => {
 
       {/* Button */}
       <div 
-        className={\`chatbot-btn \${unread ? 'pulse' : ''}\`} 
+        className={`chatbot-btn ${unread ? 'pulse' : ''}`} 
         onClick={(e) => { e.stopPropagation(); setIsOpen(!isOpen); }}
       >
         <IonIcon icon={chatbubbleEllipses} style={{ fontSize: '28px' }} />
@@ -224,7 +224,7 @@ const ChatBot: React.FC = () => {
       </div>
 
       {/* Popup */}
-      <div className={\`chatbot-popup \${isOpen ? 'open' : ''}\`} ref={chatRef}>
+      <div className={`chatbot-popup ${isOpen ? 'open' : ''}`} ref={chatRef}>
         {/* Header */}
         <div style={{ background: '#E85A5A', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', color: 'white' }}>
           <div>
