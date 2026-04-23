@@ -97,99 +97,132 @@ const SYNONYM_MAP: Record<string, string> = {
 };
 
 export const analyzeSymptoms = async (symptoms: string, profile: any = {}): Promise<AnalysisResult> => {
-  // Simulate network delay for realism
-  await new Promise(resolve => setTimeout(resolve, 1500));
+  try {
+    console.log('Engine: analyzing:', symptoms);
+    // Simulate network delay for realism
+    await new Promise(resolve => setTimeout(resolve, 900));
 
-  let text = (symptoms || '').toLowerCase();
-  
-  for (const [synonym, standard] of Object.entries(SYNONYM_MAP)) {
-    text = text.replace(new RegExp(synonym, 'g'), standard);
-  }
+    let text = (symptoms || '').toLowerCase();
+    
+    for (const [synonym, standard] of Object.entries(SYNONYM_MAP)) {
+      text = text.replace(new RegExp(synonym, 'g'), standard);
+    }
 
-  let matchedKeywords = new Set<string>();
-  const conditionScores = CONDITIONS_DB.map(condition => {
-    let matchCount = 0;
-    condition.keywords.forEach(kw => {
-      if (text.includes(kw.toLowerCase())) {
-        matchCount++;
-        matchedKeywords.add(kw);
+    let matchedKeywords = new Set<string>();
+    const conditionScores = CONDITIONS_DB.map(condition => {
+      let matchCount = 0;
+      condition.keywords.forEach(kw => {
+        if (text.includes(kw.toLowerCase())) {
+          matchCount++;
+          matchedKeywords.add(kw);
+        }
+      });
+      const likelihood = matchCount > 0 ? Math.min(100, Math.round((matchCount / condition.keywords.length) * 100)) : 0;
+      return { ...condition, matchCount, likelihood };
+    }).filter(c => c.matchCount > 0);
+
+    conditionScores.sort((a, b) => b.likelihood - a.likelihood || b.matchCount - a.matchCount);
+    
+    let severityScore = matchedKeywords.size * 5;
+    
+    // Emergency Combos
+    if (text.includes('chest pain') && text.includes('left arm')) severityScore += 50;
+    if (text.includes('drooping') && text.includes('weakness')) severityScore += 50;
+    if (text.includes('coughing blood')) severityScore += 50;
+    if (text.includes('suicid')) severityScore += 100;
+    if (text.includes('stiff neck') && text.includes('headache') && text.includes('fever')) severityScore += 50; // Meningitis combo
+    if (text.includes('changing mole') || text.includes('asymmetric lesion')) severityScore += 50; // Melanoma combo
+    
+    if (profile?.age && parseInt(profile.age) > 60) severityScore += 10;
+    
+    let severity: 'low' | 'medium' | 'high' | 'critical' = 'low';
+    if (severityScore >= 51) severity = 'critical';
+    else if (severityScore >= 31) severity = 'high';
+    else if (severityScore >= 16) severity = 'medium';
+    else if (matchedKeywords.size >= 4) severity = 'medium';
+    
+    // Apply condition severity floor
+    conditionScores.slice(0, 5).forEach(c => {
+      const levels = { 'low': 1, 'medium': 2, 'high': 3, 'critical': 4 };
+      if (levels[c.severity_floor] > levels[severity]) {
+        severity = c.severity_floor;
       }
     });
-    const likelihood = matchCount > 0 ? Math.min(100, Math.round((matchCount / condition.keywords.length) * 100)) : 0;
-    return { ...condition, matchCount, likelihood };
-  }).filter(c => c.matchCount > 0);
 
-  conditionScores.sort((a, b) => b.likelihood - a.likelihood || b.matchCount - a.matchCount);
-  
-  let severityScore = matchedKeywords.size * 5;
-  
-  // Emergency Combos
-  if (text.includes('chest pain') && text.includes('left arm')) severityScore += 50;
-  if (text.includes('drooping') && text.includes('weakness')) severityScore += 50;
-  if (text.includes('coughing blood')) severityScore += 50;
-  if (text.includes('suicid')) severityScore += 100;
-  if (text.includes('stiff neck') && text.includes('headache') && text.includes('fever')) severityScore += 50; // Meningitis combo
-  if (text.includes('changing mole') || text.includes('asymmetric lesion')) severityScore += 50; // Melanoma combo
-  
-  if (profile?.age && parseInt(profile.age) > 60) severityScore += 10;
-  
-  let severity: 'low' | 'medium' | 'high' | 'critical' = 'low';
-  if (severityScore >= 51) severity = 'critical';
-  else if (severityScore >= 31) severity = 'high';
-  else if (severityScore >= 16) severity = 'medium';
-  else if (matchedKeywords.size >= 4) severity = 'medium';
-  
-  // Apply condition severity floor
-  conditionScores.slice(0, 5).forEach(c => {
-    const levels = { 'low': 1, 'medium': 2, 'high': 3, 'critical': 4 };
-    if (levels[c.severity_floor] > levels[severity]) {
-      severity = c.severity_floor;
+    const severityLabels = { low: 'Monitor at Home', medium: 'See a Doctor Soon', high: 'Seek Care Today', critical: 'Go to ER Now' };
+    const severityColors = { low: '#10B981', medium: '#F59E0B', high: '#F97316', critical: '#EF4444' }; // Pink theme colors
+    
+    let urgencyMessage = "Monitor your symptoms closely.";
+    let recommendations = ["Rest and stay hydrated.", "Consider over-the-counter medication.", "Monitor for 48 hours."];
+    if (severity === 'medium') {
+      urgencyMessage = "Your symptoms warrant medical attention.";
+      recommendations = ["See a doctor within 24-48 hours.", "Keep track of changing symptoms.", "Avoid strenuous activity."];
+    } else if (severity === 'high') {
+      urgencyMessage = "Please seek medical care today.";
+      recommendations = ["See a doctor or visit urgent care today.", "Do not drive alone.", "Bring someone with you."];
+    } else if (severity === 'critical') {
+      urgencyMessage = "This may be a medical emergency.";
+      recommendations = ["Call emergency services (911) immediately.", "Do not wait.", "Go to the nearest ER now."];
     }
-  });
 
-  const severityLabels = { low: 'Monitor at Home', medium: 'See a Doctor Soon', high: 'Seek Care Today', critical: 'Go to ER Now' };
-  const severityColors = { low: '#10B981', medium: '#F59E0B', high: '#F97316', critical: '#EF4444' }; // Pink theme colors
-  
-  let urgencyMessage = "Monitor your symptoms closely.";
-  let recommendations = ["Rest and stay hydrated.", "Consider over-the-counter medication.", "Monitor for 48 hours."];
-  if (severity === 'medium') {
-    urgencyMessage = "Your symptoms warrant medical attention.";
-    recommendations = ["See a doctor within 24-48 hours.", "Keep track of changing symptoms.", "Avoid strenuous activity."];
-  } else if (severity === 'high') {
-    urgencyMessage = "Please seek medical care today.";
-    recommendations = ["See a doctor or visit urgent care today.", "Do not drive alone.", "Bring someone with you."];
-  } else if (severity === 'critical') {
-    urgencyMessage = "This may be a medical emergency.";
-    recommendations = ["Call emergency services (911) immediately.", "Do not wait.", "Go to the nearest ER now."];
+    if (profile?.bloodType) {
+      recommendations.push(`As blood type ${profile.bloodType}, ensure donors are compatible if transfusion is needed.`);
+    }
+    if (profile?.allergies) {
+      recommendations.push(`Note: You have listed allergies to [${profile.allergies}].`);
+    }
+
+    let topConditions = conditionScores.slice(0, 5).map(c => ({
+      name: c.name,
+      likelihood: c.likelihood,
+      description: c.description,
+      body_system: c.body_system
+    }));
+
+    if (topConditions.length === 0) {
+      topConditions = [{ name: 'Unknown Condition', likelihood: 0, description: 'No specific conditions matched.', body_system: 'Unknown' }];
+    }
+
+    const result = {
+      severity,
+      severityLabel: severityLabels[severity] as any,
+      severityColor: severityColors[severity] as any,
+      conditions: topConditions as any,
+      recommendations,
+      urgencyMessage,
+      followUpQuestions: ["How long have you had these symptoms?", "Are you taking any medications?"],
+      disclaimer: "This is not a medical diagnosis. Always consult a physician.",
+      system_matches: topConditions.map(c => c.body_system).filter((v, i, a) => a.indexOf(v) === i)
+    };
+
+    console.log('Engine: returning result:', result);
+    return result;
+
+  } catch (error) {
+    console.error('Engine error:', error);
+    // ALWAYS return a valid fallback, never throw
+    return {
+      severity: 'low',
+      severityLabel: 'Monitor at Home',
+      severityColor: '#10B981',
+      conditions: [{
+        name: 'Unable to fully analyze',
+        likelihood: 50,
+        description: 'Please describe your symptoms in more detail',
+        body_system: 'Unknown'
+      }],
+      recommendations: [
+        'Please provide more specific symptoms',
+        'Consult a doctor if symptoms persist'
+      ],
+      urgencyMessage: 'Please describe your symptoms in more detail for accurate analysis.',
+      followUpQuestions: [
+        'How long have you had these symptoms?',
+        'Are symptoms getting worse over time?'
+      ],
+      disclaimer: "This is not a medical diagnosis. Always consult a physician."
+    };
   }
+};
 
-  if (profile?.bloodType) {
-    recommendations.push(`As blood type ${profile.bloodType}, ensure donors are compatible if transfusion is needed.`);
-  }
-  if (profile?.allergies) {
-    recommendations.push(`Note: You have listed allergies to [${profile.allergies}].`);
-  }
-
-  let topConditions = conditionScores.slice(0, 5).map(c => ({
-    name: c.name,
-    likelihood: c.likelihood,
-    description: c.description,
-    body_system: c.body_system
-  }));
-
-  if (topConditions.length === 0) {
-    topConditions = [{ name: 'Unknown Condition', likelihood: 0, description: 'No specific conditions matched.', body_system: 'Unknown' }];
-  }
-
-  return {
-    severity,
-    severityLabel: severityLabels[severity] as any,
-    severityColor: severityColors[severity] as any,
-    conditions: topConditions as any,
-    recommendations,
-    urgencyMessage,
-    followUpQuestions: ["How long have you had these symptoms?", "Are you taking any medications?"],
-    disclaimer: "This is not a medical diagnosis. Always consult a physician.",
-    system_matches: topConditions.map(c => c.body_system).filter((v, i, a) => a.indexOf(v) === i)
-  };
-}
+export default { analyzeSymptoms };

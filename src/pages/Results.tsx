@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonFab, IonFabButton, IonFabList, IonIcon, useIonToast, IonButton, IonBackButton, IonButtons } from '@ionic/react';
+import React, { useState } from 'react';
+import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonFab, IonFabButton, IonFabList, IonIcon, useIonToast, IonButton, IonBackButton, IonButtons, useIonViewWillEnter } from '@ionic/react';
 import { shareSocial, copyOutline, bookmarkOutline, addOutline, checkmarkCircle } from 'ionicons/icons';
 import { useLocation, useHistory } from 'react-router';
 import { AnalysisResult, AnalyzeRequest } from '../types';
@@ -18,17 +18,32 @@ const Results: React.FC = () => {
   
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [request, setRequest] = useState<AnalyzeRequest | null>(null);
+  const [hasResult, setHasResult] = useState(false);
 
-  useEffect(() => {
-    const res = localStorage.getItem('diagnex_last_result');
-    const req = localStorage.getItem('diagnex_last_request');
-    if (res && req) {
-      setResult(JSON.parse(res));
-      setRequest(JSON.parse(req));
+  useIonViewWillEnter(() => {
+    console.log('Results: loading from localStorage...');
+    const raw = localStorage.getItem('diagnex_last_result');
+    console.log('Results: raw data:', raw);
+    
+    if (!raw) {
+      setHasResult(false);
+      return;
     }
-  }, []);
+    
+    try {
+      const parsed = JSON.parse(raw);
+      console.log('Results: parsed:', parsed);
+      setResult(parsed);
+      const reqRaw = localStorage.getItem('diagnex_last_request');
+      if (reqRaw) setRequest(JSON.parse(reqRaw));
+      setHasResult(true);
+    } catch(e) {
+      console.error('Results: parse error:', e);
+      setHasResult(false);
+    }
+  });
 
-  if (!result || !request) {
+  if (!hasResult || !result || !request) {
     return (
       <IonPage>
         <IonHeader className="ion-no-border">
@@ -38,7 +53,7 @@ const Results: React.FC = () => {
         </IonHeader>
         <IonContent className="ion-padding" style={{ '--background': 'var(--bg-primary)' }}>
           <p style={{ fontFamily: 'Plus Jakarta Sans', textAlign: 'center', marginTop: '40px', color: 'var(--text-secondary)' }}>No analysis found. Please start a new symptom check.</p>
-          <IonButton expand="block" routerLink="/home" style={{ '--background': 'var(--accent-strong)' }}>Go Home</IonButton>
+          <IonButton expand="block" routerLink="/home" style={{ '--background': 'var(--accent-strong)' }}>← Analyze Symptoms</IonButton>
         </IonContent>
       </IonPage>
     );

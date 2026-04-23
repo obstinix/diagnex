@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonCard, IonCardContent, IonTextarea, IonButton, IonRange, IonButtons, IonIcon, useIonLoading, useIonToast, IonSegment, IonSegmentButton, IonLabel, IonSpinner } from '@ionic/react';
+import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonCard, IonCardContent, IonTextarea, IonButton, IonRange, IonButtons, IonIcon, useIonLoading, useIonToast, IonSegment, IonSegmentButton, IonLabel, IonSpinner, useIonRouter } from '@ionic/react';
 import { settingsOutline, heart } from 'ionicons/icons';
 import SymptomChips from '../components/SymptomChips';
 import { analyzeSymptoms } from '../services/symptomEngine';
@@ -10,9 +10,9 @@ const Home: React.FC = () => {
   const [symptoms, setSymptoms] = useState('');
   const [painLevel, setPainLevel] = useState<number>(1);
   const [severityScale, setSeverityScale] = useState('mild');
-  const [loading, setLoading] = useState(false);
-  const [presentToast] = useIonToast();
-  const history = useHistory();
+  const [isLoading, setIsLoading] = useState(false);
+  const [present] = useIonToast();
+  const router = useIonRouter();
 
   const handleChipToggle = (symptom: string) => {
     setSymptoms(prev => {
@@ -29,52 +29,48 @@ const Home: React.FC = () => {
 
   const handleAnalyze = async () => {
     if (!symptoms.trim()) {
-      presentToast({ message: 'Please describe your symptoms first.', duration: 2000, color: 'warning' });
+      present({ message: 'Please enter symptoms', duration: 2000, color: 'warning' });
       return;
     }
 
-    setLoading(true);
+    setIsLoading(true);
+
     try {
-      // 1. Get profile
       const profileRaw = localStorage.getItem('diagnex_profile');
       const profile = profileRaw ? JSON.parse(profileRaw) : {};
 
-      // 2. Run engine with profile context
-      const result = await analyzeSymptoms(symptoms, profile);
-      console.log('Engine Analysis Result:', result);
-      
-      if (!result) {
-        presentToast({ message: 'Analysis failed. Please try again.', duration: 3000, color: 'danger' });
-        return;
-      }
-      
-      // 3. Attach profile snapshot to result for PDF use
-      const resultWithProfile = {
+      const result = await analyzeSymptoms(symptoms.trim(), profile);
+
+      if (!result) throw new Error('Engine returned null');
+
+      const resultWithMeta = {
         ...result,
         patientProfile: profile,
         analyzedAt: new Date().toISOString(),
-        symptomsText: symptoms
+        symptomsText: symptoms.trim()
       };
-      
-      // 4. Save last result
-      localStorage.setItem('diagnex_last_result', JSON.stringify(resultWithProfile));
-      localStorage.setItem('diagnex_last_request', JSON.stringify({ symptoms, profile: profile }));
-      
-      // 5. Save to history array
-      const history = JSON.parse(localStorage.getItem('diagnex_history') || '[]');
-      history.unshift({
+
+      localStorage.setItem('diagnex_last_result', JSON.stringify(resultWithMeta));
+
+      const hist = JSON.parse(localStorage.getItem('diagnex_history') || '[]');
+      hist.unshift({
         id: Date.now().toString(),
         timestamp: new Date().toISOString(),
-        symptoms: symptoms,
-        result: resultWithProfile
+        symptoms: symptoms.trim(),
+        result: resultWithMeta
       });
-      localStorage.setItem('diagnex_history', JSON.stringify(history.slice(0, 20)));
+      localStorage.setItem('diagnex_history', JSON.stringify(hist.slice(0, 20)));
 
-      // 6. Navigate to results
-      history.push('/results');
+      setIsLoading(false);
+      router.push('/results', 'forward', 'push');
+
     } catch (err: any) {
-      setLoading(false);
-      presentToast({ message: err.message || 'An error occurred during analysis.', duration: 3000, color: 'danger' });
+      setIsLoading(false);
+      present({
+        message: 'Analysis failed: ' + (err.message || 'Unknown error'),
+        duration: 3000,
+        color: 'danger'
+      });
     }
   };
 
@@ -193,8 +189,8 @@ const Home: React.FC = () => {
                 </IonSegment>
               </div>
 
-              <IonButton className="analyze-button" expand="block" disabled={loading} onClick={handleAnalyze}>
-                {loading ? <IonSpinner name="crescent" color="light" /> : 'Analyze Symptoms'}
+              <IonButton className="analyze-button" expand="block" disabled={isLoading} onClick={handleAnalyze}>
+                {isLoading ? <IonSpinner name="crescent" color="light" /> : 'Analyze Symptoms'}
               </IonButton>
             </IonCardContent>
           </IonCard>
