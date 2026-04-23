@@ -16,8 +16,9 @@ const DownloadReportButton: React.FC<Props> = ({ result, request }) => {
   const handleDownload = async () => {
     await present({ message: 'Generating your report...' });
     try {
-      const profile = getProfile();
-      await generatePDFReport(result, request, profile || undefined);
+      const resultRaw = localStorage.getItem('diagnex_last_result');
+      const result = resultRaw ? JSON.parse(resultRaw) : {};
+      await generatePDFReport(result);
     } catch (err) {
       console.error(err);
     } finally {

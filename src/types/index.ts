@@ -26,6 +26,7 @@ export interface AnalyzeRequest {
   medications?: string;
   allergies?: string;
   followUp?: string;
+  profile?: any;
 }
 
 export interface PatientProfile {

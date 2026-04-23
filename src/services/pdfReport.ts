@@ -1,7 +1,6 @@
 import { jsPDF } from 'jspdf';
 import { Chart, registerables } from 'chart.js';
 import QRCode from 'qrcode';
-import { AnalysisResult, PatientProfile, AnalyzeRequest } from '../types';
 
 Chart.register(...registerables);
 
@@ -12,7 +11,6 @@ function createChartCanvas(config: any): Promise<string> {
     canvas.height = 400;
     document.body.appendChild(canvas);
     
-    // Disable animations for immediate render
     if (!config.options) config.options = {};
     config.options.animation = false;
     config.options.responsive = false;
@@ -28,180 +26,236 @@ function createChartCanvas(config: any): Promise<string> {
   });
 }
 
-export async function generatePDFReport(result: AnalysisResult, request: AnalyzeRequest, profile?: PatientProfile) {
+export const generatePDFReport = async (analysisResult: any) => {
+  const profile = analysisResult.patientProfile || {};
+  const name = profile.name || 'Anonymous Patient';
+  const age = profile.age || 'N/A';
+  const gender = profile.gender || 'N/A';
+  const bloodType = profile.bloodType || 'N/A';
+  const allergies = profile.allergies || 'None reported';
+  const medications = profile.medications || 'None reported';
+  const emergency = profile.emergencyContact || 'Not provided';
+  const date = new Date(analysisResult.analyzedAt || Date.now()).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  const reportId = 'DX-' + Date.now().toString().slice(-6);
+
   const doc = new jsPDF({ format: 'a4' });
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
-  
   const accentColor = '#E85A5A';
-  const pinkStrip = '#FADADD';
-  
-  const profileData = localStorage.getItem('diagnex_profile');
-  const activeProfile = profile || (profileData ? JSON.parse(profileData) : {});
-  const patientName = activeProfile.name || 'Anonymous Patient';
+
+  const addFooter = (pageNum: number) => {
+    doc.setDrawColor('#F0D6DA');
+    doc.setLineWidth(0.5);
+    doc.line(15, pageHeight - 15, pageWidth - 15, pageHeight - 15);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(150);
+    doc.text(`Patient: ${name} | DOB Age: ${age}`, 15, pageHeight - 8);
+    doc.text('CONFIDENTIAL', pageWidth / 2, pageHeight - 8, { align: 'center' });
+    doc.text(`Page ${pageNum} of 4 | ${date}`, pageWidth - 15, pageHeight - 8, { align: 'right' });
+  };
 
   const addWatermark = () => {
-    doc.setFontSize(80);
-    doc.setTextColor(240, 240, 240); // very light gray
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(60);
+    doc.setTextColor(250, 240, 242);
     doc.text('CONFIDENTIAL', pageWidth / 2, pageHeight / 2, { align: 'center', angle: 45 });
   };
-  
-  const addHeader = (title: string) => {
-    addWatermark();
-    doc.setFillColor(pinkStrip);
-    doc.rect(0, 0, pageWidth, 20, 'F');
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(14);
-    doc.setTextColor(accentColor);
-    doc.text(title, 15, 14);
-  };
-  
-  const addFooter = (pageNum: number) => {
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(10);
-    doc.setTextColor(150);
-    const dateStr = new Date().toLocaleDateString();
-    doc.text(`Patient: ${patientName} | Generated: ${dateStr} | Diagnex Health`, 15, pageHeight - 10);
-    doc.text(`Page ${pageNum}`, pageWidth - 25, pageHeight - 10);
-  };
 
-  // PAGE 1: COVER
+  // PAGE 1: COVER PAGE
   addWatermark();
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(36);
-  doc.setTextColor(accentColor);
-  doc.text('Diagnex', pageWidth / 2, 60, { align: 'center' });
-  
-  doc.setFontSize(20);
-  doc.setTextColor(50);
-  doc.text('Health Analysis Report', pageWidth / 2, 75, { align: 'center' });
-  
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(12);
-  doc.text(`Date: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`, pageWidth / 2, 90, { align: 'center' });
-  
-  const boxY = 100;
-  doc.setDrawColor('#F0D6DA');
-  doc.setFillColor('#FFF5F7');
-  doc.rect(40, boxY, pageWidth - 80, 50, 'FD');
-  
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(12);
-  doc.setTextColor(accentColor);
-  doc.text('PATIENT INFORMATION', 45, boxY + 8);
-  
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(50);
-  doc.setFontSize(10);
-  doc.text(`Name: ${activeProfile.name || 'Guest'}`, 45, boxY + 16);
-  doc.text(`Age: ${activeProfile.age || 'N/A'}`, 45, boxY + 22);
-  doc.text(`Gender: ${activeProfile.gender || 'N/A'}`, 45, boxY + 28);
-  if (activeProfile.name) {
-    doc.text(`Allergies: ${activeProfile.allergies || 'None'}`, 45, boxY + 34);
-    doc.text(`Medications: ${activeProfile.medications || 'None'}`, 45, boxY + 40);
-  }
-  doc.text(`Report Date: ${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}`, 120, boxY + 16);
-  doc.text(`Report ID: DX-${Math.floor(Math.random() * 10000)}`, 120, boxY + 22);
-
-  const severityY = 160;
-  doc.setFillColor(result.severityColor);
-  doc.roundedRect(pageWidth / 2 - 40, severityY, 80, 20, 3, 3, 'F');
+  doc.setFillColor(accentColor);
+  doc.rect(0, 0, pageWidth, 40, 'F');
   doc.setTextColor('#FFFFFF');
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(16);
-  doc.text(result.severityLabel.toUpperCase(), pageWidth / 2, severityY + 14, { align: 'center' });
-  
-  doc.setTextColor(150);
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'normal');
-  doc.text('Disclaimer: This is not a medical diagnosis. Always consult a licensed physician.', pageWidth / 2, pageHeight - 30, { align: 'center' });
-  
-  addFooter(1);
+  doc.text('DIAGNEX HEALTH ANALYSIS REPORT', pageWidth / 2, 25, { align: 'center' });
 
-  // PAGE 2: SUMMARY
-  doc.addPage();
-  addHeader('Analysis Summary');
+  doc.setTextColor(accentColor);
+  doc.setFontSize(40);
+  doc.text('Diagnex', pageWidth / 2, 70, { align: 'center' });
+  doc.setTextColor(150);
+  doc.setFontSize(14);
+  doc.setFont('helvetica', 'normal');
+  doc.text('AI-Powered Health Intelligence', pageWidth / 2, 80, { align: 'center' });
+
+  const boxY = 110;
+  doc.setDrawColor('#F0D6DA');
+  doc.setLineWidth(0.5);
+  doc.setFillColor('#FFF5F7');
+  doc.roundedRect(pageWidth / 2 - 80, boxY, 160, 110, 4, 4, 'FD');
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(12);
+  doc.setTextColor(accentColor);
+  doc.text('PATIENT INFORMATION', pageWidth / 2 - 70, boxY + 15);
+  doc.setDrawColor('#F0D6DA');
+  doc.line(pageWidth / 2 - 70, boxY + 20, pageWidth / 2 + 70, boxY + 20);
+
+  doc.setTextColor(50);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  let lineY = boxY + 30;
+  const leftX = pageWidth / 2 - 70;
+  const rightX = pageWidth / 2 - 20;
+
+  doc.setFont('helvetica', 'bold'); doc.text('Full Name:', leftX, lineY); doc.setFont('helvetica', 'normal'); doc.text(name, rightX, lineY); lineY += 8;
+  doc.setFont('helvetica', 'bold'); doc.text('Age:', leftX, lineY); doc.setFont('helvetica', 'normal'); doc.text(`${age} years`, rightX, lineY); lineY += 8;
+  doc.setFont('helvetica', 'bold'); doc.text('Gender:', leftX, lineY); doc.setFont('helvetica', 'normal'); doc.text(gender, rightX, lineY); lineY += 8;
+  doc.setFont('helvetica', 'bold'); doc.text('Blood Type:', leftX, lineY); doc.setFont('helvetica', 'normal'); doc.text(bloodType, rightX, lineY); lineY += 8;
+  doc.setFont('helvetica', 'bold'); doc.text('Known Allergies:', leftX, lineY); doc.setFont('helvetica', 'normal'); doc.text(allergies, rightX, lineY); lineY += 8;
+  doc.setFont('helvetica', 'bold'); doc.text('Medications:', leftX, lineY); doc.setFont('helvetica', 'normal'); doc.text(medications, rightX, lineY); lineY += 8;
+  doc.setFont('helvetica', 'bold'); doc.text('Emergency:', leftX, lineY); doc.setFont('helvetica', 'normal'); doc.text(emergency, rightX, lineY); lineY += 12;
+
+  doc.line(leftX, lineY - 6, pageWidth / 2 + 70, lineY - 6);
+
+  doc.setFont('helvetica', 'bold'); doc.text('Report ID:', leftX, lineY); doc.setFont('helvetica', 'normal'); doc.text(reportId, rightX, lineY); lineY += 8;
+  doc.setFont('helvetica', 'bold'); doc.text('Generated:', leftX, lineY); doc.setFont('helvetica', 'normal'); doc.text(date, rightX, lineY); lineY += 8;
+  doc.setFont('helvetica', 'bold'); doc.text('Analysis Time:', leftX, lineY); doc.setFont('helvetica', 'normal'); doc.text(new Date(analysisResult.analyzedAt || Date.now()).toLocaleTimeString(), rightX, lineY);
+
+  const sevColors = { low: '#10B981', medium: '#F59E0B', high: '#F97316', critical: '#EF4444' };
+  const sevBg = sevColors[analysisResult.severity as keyof typeof sevColors] || sevColors.low;
   
-  let y = 40;
+  doc.setFillColor(sevBg);
+  doc.rect(pageWidth / 2 - 80, boxY + 130, 160, 20, 'F');
+  doc.setTextColor('#FFFFFF');
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(14);
-  doc.setTextColor(0);
-  doc.text('Symptoms Entered:', 15, y);
-  
+  doc.text(`RISK LEVEL: ${(analysisResult.severity || 'UNKNOWN').toUpperCase()}`, pageWidth / 2, boxY + 144, { align: 'center' });
+
+  doc.setTextColor(150);
+  doc.setFontSize(8);
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(12);
+  doc.text('CONFIDENTIAL — For personal use only', pageWidth / 2, pageHeight - 30, { align: 'center' });
+  doc.text('Diagnex is not a substitute for professional medical advice', pageWidth / 2, pageHeight - 25, { align: 'center' });
+
+  addFooter(1);
+
+  // PAGE 2: ANALYSIS SUMMARY
+  doc.addPage();
+  addWatermark();
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(20);
+  doc.setTextColor(accentColor);
+  doc.text('ANALYSIS SUMMARY', 15, 30);
+
+  doc.setFontSize(14);
+  doc.setTextColor(50);
+  doc.text('Symptoms Reported', 15, 45);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(11);
+  const symps = (analysisResult.symptomsText || '').split(',').map((s: string) => s.trim()).filter(Boolean);
+  let y = 55;
+  symps.forEach((s: string) => {
+    doc.text(`• ${s}`, 20, y);
+    y += 7;
+  });
+
   y += 10;
-  
-  const splitSymptoms = doc.splitTextToSize(request.symptoms || 'None provided.', pageWidth - 30);
-  doc.text(splitSymptoms, 15, y);
-  y += (splitSymptoms.length * 6) + 10;
-  
-  doc.setFillColor(result.severityColor);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(14);
+  doc.text('Urgency Assessment', 15, y);
+  y += 10;
+  doc.setFillColor(sevBg);
   doc.rect(15, y, 5, 20, 'F');
-  doc.setFont('helvetica', 'bold');
-  doc.text('Urgency Level:', 25, y + 8);
   doc.setFont('helvetica', 'normal');
-  doc.text(result.urgencyMessage, 25, y + 16);
-  y += 35;
+  doc.setFontSize(11);
+  doc.text(analysisResult.urgencyMessage || '', 25, y + 12);
   
+  y += 35;
   doc.setFont('helvetica', 'bold');
-  doc.text('Top Conditions:', 15, y);
+  doc.setFontSize(14);
+  doc.text('Possible Conditions', 15, y);
   y += 10;
+  
+  doc.setFillColor(accentColor);
+  doc.rect(15, y, pageWidth - 30, 10, 'F');
+  doc.setTextColor('#FFFFFF');
+  doc.setFontSize(11);
+  doc.text('Condition', 20, y + 7);
+  doc.text('Likelihood', 80, y + 7);
+  doc.text('Description', 110, y + 7);
+  
+  y += 10;
+  doc.setTextColor(50);
   doc.setFont('helvetica', 'normal');
-  result.conditions.slice(0, 3).forEach(c => {
-    doc.text(`• ${c.name} (${c.likelihood}%)`, 20, y);
+  const conds = analysisResult.conditions || [];
+  conds.slice(0, 4).forEach((c: any, i: number) => {
+    if (i % 2 === 0) {
+      doc.setFillColor('#FFF5F7');
+      doc.rect(15, y, pageWidth - 30, 12, 'F');
+    }
+    doc.text(c.name.substring(0, 25), 20, y + 8);
+    doc.text(`${c.likelihood}%`, 80, y + 8);
+    doc.text(c.description.substring(0, 45) + (c.description.length > 45 ? '...' : ''), 110, y + 8);
+    y += 12;
+  });
+
+  y += 15;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(14);
+  doc.text('Recommendations', 15, y);
+  y += 10;
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'normal');
+  (analysisResult.recommendations || []).forEach((r: string, i: number) => {
+    doc.setTextColor(accentColor);
+    doc.text('✓', 15, y);
+    doc.setTextColor(50);
+    doc.text(`${i + 1}. ${r}`, 25, y);
     y += 8;
   });
-  y += 10;
-  
-  doc.setFont('helvetica', 'bold');
-  doc.text('Recommendations:', 15, y);
-  y += 10;
-  doc.setFont('helvetica', 'normal');
-  result.recommendations.forEach((r, idx) => {
-    const splitRec = doc.splitTextToSize(`${idx + 1}. ${r}`, pageWidth - 30);
-    doc.text(splitRec, 20, y);
-    y += (splitRec.length * 6) + 2;
-  });
-  
+
+  if (allergies !== 'None reported' || medications !== 'None reported') {
+    y += 10;
+    doc.setFillColor('#FFF5F7');
+    doc.rect(15, y, pageWidth - 30, 20, 'F');
+    doc.setTextColor(accentColor);
+    doc.text(`Note: Analysis considers your reported allergies (${allergies}) and current medications (${medications})`, 20, y + 12);
+  }
+
   addFooter(2);
 
   // PAGE 3: CHARTS
   doc.addPage();
-  addHeader('Visual Charts');
+  addWatermark();
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(20);
+  doc.setTextColor(accentColor);
+  doc.text(`Health Risk Charts — ${name}`, 15, 30);
   
   const pieDataUrl = await createChartCanvas({
     type: 'pie',
     data: {
-      labels: result.conditions.slice(0, 5).map(c => c.name),
+      labels: conds.slice(0, 5).map((c:any) => c.name),
       datasets: [{
-        data: result.conditions.slice(0, 5).map(c => c.likelihood),
+        data: conds.slice(0, 5).map((c:any) => c.likelihood),
         backgroundColor: ['#E85A5A', '#F59E0B', '#10B981', '#3B82F6', '#8B5CF6']
       }]
     },
     options: { plugins: { title: { display: true, text: 'Condition Likelihood Distribution' } } }
   });
-  doc.addImage(pieDataUrl, 'PNG', 20, 30, 80, 55);
+  doc.addImage(pieDataUrl, 'PNG', 20, 40, 80, 55);
 
   const barDataUrl = await createChartCanvas({
     type: 'bar',
     data: {
-      labels: ['Severity Weight', 'Risk Factor', 'Match Confidence'],
+      labels: ['Severity', 'Risk Factor', 'Confidence'],
       datasets: [{
         label: 'Factors',
         data: [
-          result.severity === 'critical' ? 10 : result.severity === 'high' ? 7 : 4,
-          (activeProfile.age && parseInt(activeProfile.age) > 60) ? 8 : 3,
-          result.conditions[0]?.likelihood || 0
+          analysisResult.severity === 'critical' ? 10 : analysisResult.severity === 'high' ? 7 : 4,
+          (age && parseInt(age as string) > 60) ? 8 : 3,
+          conds[0]?.likelihood || 0
         ],
         backgroundColor: '#E85A5A'
       }]
     },
     options: { indexAxis: 'y', plugins: { title: { display: true, text: 'Symptom Severity Factors' } } }
   });
-  doc.addImage(barDataUrl, 'PNG', 110, 30, 80, 55);
+  doc.addImage(barDataUrl, 'PNG', 110, 40, 80, 55);
 
-  const sysMatches = result.system_matches || [];
+  const sysMatches = analysisResult.system_matches || [];
   const radarDataUrl = await createChartCanvas({
     type: 'radar',
     data: {
@@ -222,12 +276,12 @@ export async function generatePDFReport(result: AnalysisResult, request: Analyze
     },
     options: { plugins: { title: { display: true, text: 'Health Risk Profile' } }, scales: { r: { min: 0, max: 10 } } }
   });
-  doc.addImage(radarDataUrl, 'PNG', 20, 100, 80, 55);
+  doc.addImage(radarDataUrl, 'PNG', 20, 110, 80, 55);
 
   let riskScore = 20;
-  if (result.severity === 'medium') riskScore = 50;
-  if (result.severity === 'high') riskScore = 80;
-  if (result.severity === 'critical') riskScore = 95;
+  if (analysisResult.severity === 'medium') riskScore = 50;
+  if (analysisResult.severity === 'high') riskScore = 80;
+  if (analysisResult.severity === 'critical') riskScore = 95;
   
   const gaugeDataUrl = await createChartCanvas({
     type: 'doughnut',
@@ -242,19 +296,25 @@ export async function generatePDFReport(result: AnalysisResult, request: Analyze
     },
     options: { plugins: { title: { display: true, text: `Overall Risk Score: ${riskScore}/100` } } }
   });
-  doc.addImage(gaugeDataUrl, 'PNG', 110, 100, 80, 55);
+  doc.addImage(gaugeDataUrl, 'PNG', 110, 110, 80, 55);
 
   addFooter(3);
 
   // PAGE 4: FOLLOW-UP
   doc.addPage();
-  addHeader('Follow-up & Guidance');
-  
-  y = 40;
+  addWatermark();
   doc.setFont('helvetica', 'bold');
+  doc.setFontSize(20);
+  doc.setTextColor(accentColor);
+  doc.text('FOLLOW-UP GUIDANCE', 15, 30);
+  
+  y = 50;
+  doc.setFontSize(14);
+  doc.setTextColor(50);
   doc.text('When to seek emergency care:', 15, y);
   y += 10;
   doc.setFont('helvetica', 'normal');
+  doc.setFontSize(11);
   const erList = [
     '• Difficulty breathing or shortness of breath',
     '• Chest pain or pressure',
@@ -266,23 +326,25 @@ export async function generatePDFReport(result: AnalysisResult, request: Analyze
     y += 8;
   });
   
-  y += 15;
+  y += 20;
   doc.setFont('helvetica', 'bold');
+  doc.setFontSize(14);
   doc.text('Conditions to Rule Out:', 15, y);
   y += 10;
   doc.setFont('helvetica', 'normal');
-  result.conditions.slice(3, 8).forEach(c => {
+  doc.setFontSize(11);
+  conds.slice(3, 8).forEach((c: any) => {
     doc.text(`• ${c.name}`, 20, y);
     y += 8;
   });
   
-  y += 20;
+  y += 30;
   const qrDataUrl = await QRCode.toDataURL('https://diagnex.netlify.app');
   doc.addImage(qrDataUrl, 'PNG', pageWidth / 2 - 25, y, 50, 50);
   doc.setFont('helvetica', 'italic');
   doc.text('Scan to visit Diagnex', pageWidth / 2, y + 60, { align: 'center' });
 
   addFooter(4);
-  
-  doc.save('Diagnex_Report.pdf');
-}
+
+  doc.save(`Diagnex_Report_${name.replace(/\s+/g, '_')}.pdf`);
+};

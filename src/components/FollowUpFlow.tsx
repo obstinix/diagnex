@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { IonChip, IonLabel, IonSpinner } from '@ionic/react';
-import { analyzeSymptoms } from '../services/api';
+import { analyzeSymptoms } from '../services/symptomEngine';
 import { AnalyzeRequest, AnalysisResult } from '../types';
 
 interface Props {
@@ -21,11 +21,8 @@ const FollowUpFlow: React.FC<Props> = ({ questions, initialRequest, onUpdateResu
     setAnswered(true);
     try {
       const followUpContext = `User was asked: "${question}". They replied: "${answer}".`;
-      const newRequest: AnalyzeRequest = {
-        ...initialRequest,
-        followUp: (initialRequest.followUp ? initialRequest.followUp + '\n' : '') + followUpContext
-      };
-      const result = await analyzeSymptoms(newRequest);
+      const combinedSymptoms = `${initialRequest.symptoms}\n${followUpContext}`;
+      const result = await analyzeSymptoms(combinedSymptoms, initialRequest.profile);
       onUpdateResult(result);
     } catch (err: any) {
       onError(err.message || 'Follow-up analysis failed.');

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonCard, IonCardContent, IonTextarea, IonButton, IonRange, IonButtons, IonIcon, useIonLoading, useIonToast, IonSegment, IonSegmentButton, IonLabel, IonSpinner } from '@ionic/react';
 import { settingsOutline, heart } from 'ionicons/icons';
 import SymptomChips from '../components/SymptomChips';
-import { analyzeSymptoms } from '../services/api';
+import { analyzeSymptoms } from '../services/symptomEngine';
 import { useHistory } from 'react-router';
 import { getProfile } from '../services/storage';
 
@@ -34,22 +34,13 @@ const Home: React.FC = () => {
     }
 
     setLoading(true);
-
     try {
-      const profile = getProfile();
-      const payload = {
-        symptoms: `${symptoms}. Pain level: ${painLevel}/10. Reported severity: ${severityScale}.`,
-        ...(profile?.shareProfile ? {
-          age: profile.age,
-          gender: profile.gender,
-          medications: profile.medications,
-          allergies: profile.allergies
-        } : {})
-      };
+      // 1. Get profile
+      const profileRaw = localStorage.getItem('diagnex_profile');
+      const profile = profileRaw ? JSON.parse(profileRaw) : {};
 
-      const result = await analyzeSymptoms(payload);
-      setLoading(false);
-      
+      // 2. Run engine with profile context
+      const result = await analyzeSymptoms(symptoms, profile);
       console.log('Engine Analysis Result:', result);
       
       if (!result) {
@@ -57,25 +48,33 @@ const Home: React.FC = () => {
         return;
       }
       
-      localStorage.setItem('diagnex_last_result', JSON.stringify(result));
-      localStorage.setItem('diagnex_last_request', JSON.stringify(payload));
+      // 3. Attach profile snapshot to result for PDF use
+      const resultWithProfile = {
+        ...result,
+        patientProfile: profile,
+        analyzedAt: new Date().toISOString(),
+        symptomsText: symptoms
+      };
       
-      // Save to history array
-      const existing = JSON.parse(localStorage.getItem('diagnex_history') || '[]');
-      const historyEntry = {
+      // 4. Save last result
+      localStorage.setItem('diagnex_last_result', JSON.stringify(resultWithProfile));
+      localStorage.setItem('diagnex_last_request', JSON.stringify({ symptoms, profile: profile }));
+      
+      // 5. Save to history array
+      const history = JSON.parse(localStorage.getItem('diagnex_history') || '[]');
+      history.unshift({
         id: Date.now().toString(),
         timestamp: new Date().toISOString(),
         symptoms: symptoms,
-        result: result
-      };
-      existing.unshift(historyEntry);
-      const trimmed = existing.slice(0, 20);
-      localStorage.setItem('diagnex_history', JSON.stringify(trimmed));
+        result: resultWithProfile
+      });
+      localStorage.setItem('diagnex_history', JSON.stringify(history.slice(0, 20)));
 
+      // 6. Navigate to results
       history.push('/results');
     } catch (err: any) {
       setLoading(false);
-      presentToast({ message: err.message || 'Failed to analyze symptoms. Please try again.', duration: 3000, color: 'danger' });
+      presentToast({ message: err.message || 'An error occurred during analysis.', duration: 3000, color: 'danger' });
     }
   };
 

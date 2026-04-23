@@ -96,9 +96,11 @@ const SYNONYM_MAP: Record<string, string> = {
   "stiff neck": "stiff neck", "bullseye rash": "bullseye rash", "eye pain": "eye pain"
 };
 
-export function analyzeSymptoms(symptomsText: string, profile?: PatientProfile): AnalysisResult {
-  console.log('Engine called with:', symptomsText);
-  let text = (symptomsText || '').toLowerCase();
+export const analyzeSymptoms = async (symptoms: string, profile: any = {}): Promise<AnalysisResult> => {
+  // Simulate network delay for realism
+  await new Promise(resolve => setTimeout(resolve, 1500));
+
+  let text = (symptoms || '').toLowerCase();
   
   for (const [synonym, standard] of Object.entries(SYNONYM_MAP)) {
     text = text.replace(new RegExp(synonym, 'g'), standard);
@@ -159,6 +161,13 @@ export function analyzeSymptoms(symptomsText: string, profile?: PatientProfile):
   } else if (severity === 'critical') {
     urgencyMessage = "This may be a medical emergency.";
     recommendations = ["Call emergency services (911) immediately.", "Do not wait.", "Go to the nearest ER now."];
+  }
+
+  if (profile?.bloodType) {
+    recommendations.push(`As blood type ${profile.bloodType}, ensure donors are compatible if transfusion is needed.`);
+  }
+  if (profile?.allergies) {
+    recommendations.push(`Note: You have listed allergies to [${profile.allergies}].`);
   }
 
   let topConditions = conditionScores.slice(0, 5).map(c => ({

@@ -1,24 +1,31 @@
-import React, { useState, useEffect } from 'react';
-import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonList, IonItem, IonInput, IonSelect, IonSelectOption, IonToggle, IonLabel, IonButton, useIonToast, IonAvatar } from '@ionic/react';
+import React, { useState } from 'react';
+import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonInput, IonItem, IonLabel, IonAvatar, useIonToast, IonTextarea, useIonViewWillEnter } from '@ionic/react';
 import { PatientProfile } from '../types';
-import { getProfile, saveProfile } from '../services/storage';
-
-const defaultProfile: PatientProfile = {
-  name: '', age: '', gender: '', bloodType: '', medications: '', allergies: '', emergencyContact: '', shareProfile: true
-};
 
 const Profile: React.FC = () => {
-  const [profile, setProfile] = useState<PatientProfile>(defaultProfile);
+  const [profile, setProfile] = useState<PatientProfile>({
+    name: '', age: '', gender: '', bloodType: '',
+    allergies: '', medications: '', emergencyContact: '', shareProfile: true
+  });
   const [presentToast] = useIonToast();
 
-  useEffect(() => {
-    const p = getProfile();
-    if (p) setProfile(p);
-  }, []);
+  useIonViewWillEnter(() => {
+    const saved = localStorage.getItem('diagnex_profile');
+    if (saved) {
+      setProfile(JSON.parse(saved));
+    }
+  });
 
-  const handleSave = () => {
-    saveProfile(profile);
-    presentToast({ message: 'Profile saved successfully', duration: 2000, color: 'success' });
+  const updateField = (field: string, value: string) => {
+    const updated = { ...profile, [field as keyof PatientProfile]: value };
+    setProfile(updated as PatientProfile);
+    localStorage.setItem('diagnex_profile', JSON.stringify(updated));
+    presentToast({
+      message: '✓ Saved',
+      duration: 1500,
+      position: 'top',
+      color: 'success'
+    });
   };
 
   const sectionHeaderStyle: React.CSSProperties = {
@@ -62,90 +69,75 @@ const Profile: React.FC = () => {
               border-color: #E85A5A;
               box-shadow: 0 0 0 3px rgba(232,90,90,0.1);
             }
-            .save-button {
-              --background: #E85A5A;
-              --color: white;
-              --border-radius: 50px;
-              height: 54px;
-              font-family: 'Plus Jakarta Sans', sans-serif;
-              font-size: 16px;
-              font-weight: 600;
-              --box-shadow: 0 8px 24px rgba(232,90,90,0.35);
-              transition: all 0.2s ease;
-              margin-top: 24px;
-            }
-            .save-button:hover {
-              transform: translateY(-2px);
-              --box-shadow: 0 12px 28px rgba(232,90,90,0.45);
+            .info-card {
+              background: #FFF5F7;
+              border: 1px solid #F0D6DA;
+              border-radius: 12px;
+              padding: 16px;
+              margin-top: 32px;
+              margin-bottom: 32px;
+              display: flex;
+              gap: 12px;
             }
           `}
         </style>
+
         <div className="ion-padding animate-in">
-          
           <div className="ion-text-center ion-margin-bottom" style={{ marginTop: '16px' }}>
-            <IonAvatar style={{ width: '80px', height: '80px', margin: '0 auto', background: '#FADADD', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#E85A5A', fontSize: '2rem', fontWeight: 'bold', boxShadow: '0 8px 24px rgba(232,90,90,0.25)' }}>
+            <IonAvatar style={{ width: '80px', height: '80px', margin: '0 auto', background: '#E85A5A', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '2rem', fontWeight: 'bold', boxShadow: '0 8px 24px rgba(232,90,90,0.25)' }}>
               {profile.name ? profile.name.charAt(0).toUpperCase() : '?'}
             </IonAvatar>
           </div>
 
-          <div style={sectionHeaderStyle}>Personal Details</div>
+          <div style={sectionHeaderStyle}>Basic Information</div>
           
-          <IonList lines="none" style={{ background: 'transparent', padding: 0 }}>
-            <IonItem className="profile-input">
-              <IonInput label="Full Name" labelPlacement="stacked" value={profile.name} onIonInput={e => setProfile({...profile, name: e.detail.value!})} />
-            </IonItem>
-            <div style={{ display: 'flex', gap: '12px' }}>
-              <IonItem className="profile-input" style={{ flex: 1 }}>
-                <IonInput type="number" label="Age" labelPlacement="stacked" value={profile.age} onIonInput={e => setProfile({...profile, age: e.detail.value!})} />
-              </IonItem>
-              <IonItem className="profile-input" style={{ flex: 1 }}>
-                <IonSelect label="Gender" labelPlacement="stacked" value={profile.gender} onIonChange={e => setProfile({...profile, gender: e.detail.value})}>
-                  <IonSelectOption value="Male">Male</IonSelectOption>
-                  <IonSelectOption value="Female">Female</IonSelectOption>
-                  <IonSelectOption value="Other">Other</IonSelectOption>
-                </IonSelect>
-              </IonItem>
-            </div>
-            <IonItem className="profile-input">
-              <IonSelect label="Blood Type" labelPlacement="stacked" value={profile.bloodType} onIonChange={e => setProfile({...profile, bloodType: e.detail.value})}>
-                <IonSelectOption value="A+">A+</IonSelectOption>
-                <IonSelectOption value="A-">A-</IonSelectOption>
-                <IonSelectOption value="B+">B+</IonSelectOption>
-                <IonSelectOption value="B-">B-</IonSelectOption>
-                <IonSelectOption value="AB+">AB+</IonSelectOption>
-                <IonSelectOption value="AB-">AB-</IonSelectOption>
-                <IonSelectOption value="O+">O+</IonSelectOption>
-                <IonSelectOption value="O-">O-</IonSelectOption>
-              </IonSelect>
-            </IonItem>
-          </IonList>
+          <IonItem className="profile-input" lines="none">
+            <IonLabel position="stacked" style={{ color: '#6B6B6B', marginBottom: '8px' }}>Full Name</IonLabel>
+            <IonInput value={profile.name} placeholder="e.g. Piyush" onIonInput={e => updateField('name', e.detail.value! as string)} />
+          </IonItem>
 
-          <div style={sectionHeaderStyle}>Medical History</div>
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <IonItem className="profile-input" lines="none" style={{ flex: 1 }}>
+              <IonLabel position="stacked" style={{ color: '#6B6B6B', marginBottom: '8px' }}>Age</IonLabel>
+              <IonInput type="number" value={profile.age} placeholder="e.g. 21" onIonInput={e => updateField('age', e.detail.value! as string)} />
+            </IonItem>
+            <IonItem className="profile-input" lines="none" style={{ flex: 1 }}>
+              <IonLabel position="stacked" style={{ color: '#6B6B6B', marginBottom: '8px' }}>Gender</IonLabel>
+              <IonInput value={profile.gender} placeholder="e.g. Male" onIonInput={e => updateField('gender', e.detail.value! as string)} />
+            </IonItem>
+          </div>
 
-          <IonList lines="none" style={{ background: 'transparent', padding: 0 }}>
-            <IonItem className="profile-input">
-              <IonInput label="Medications" labelPlacement="stacked" value={profile.medications} onIonInput={e => setProfile({...profile, medications: e.detail.value!})} />
-            </IonItem>
-            <IonItem className="profile-input">
-              <IonInput label="Allergies" labelPlacement="stacked" value={profile.allergies} onIonInput={e => setProfile({...profile, allergies: e.detail.value!})} />
-            </IonItem>
-          </IonList>
+          <IonItem className="profile-input" lines="none">
+            <IonLabel position="stacked" style={{ color: '#6B6B6B', marginBottom: '8px' }}>Blood Type</IonLabel>
+            <IonInput value={profile.bloodType} placeholder="e.g. O-" onIonInput={e => updateField('bloodType', e.detail.value! as string)} />
+          </IonItem>
+
+          <div style={sectionHeaderStyle}>Medical Details</div>
+
+          <IonItem className="profile-input" lines="none">
+            <IonLabel position="stacked" style={{ color: '#6B6B6B', marginBottom: '8px' }}>Known Allergies</IonLabel>
+            <IonTextarea rows={3} value={profile.allergies} placeholder="List any known allergies..." onIonInput={e => updateField('allergies', e.detail.value! as string)} />
+          </IonItem>
+
+          <IonItem className="profile-input" lines="none">
+            <IonLabel position="stacked" style={{ color: '#6B6B6B', marginBottom: '8px' }}>Current Medications</IonLabel>
+            <IonTextarea rows={3} value={profile.medications} placeholder="List current medications..." onIonInput={e => updateField('medications', e.detail.value! as string)} />
+          </IonItem>
 
           <div style={sectionHeaderStyle}>Emergency</div>
 
-          <IonList lines="none" style={{ background: 'transparent', padding: 0 }}>
-            <IonItem className="profile-input">
-              <IonInput type="tel" label="Emergency Contact" labelPlacement="stacked" value={profile.emergencyContact} onIonInput={e => setProfile({...profile, emergencyContact: e.detail.value!})} />
-            </IonItem>
-            
-            <IonItem className="profile-input" style={{ marginTop: '16px' }}>
-              <IonToggle checked={profile.shareProfile} onIonChange={e => setProfile({...profile, shareProfile: e.detail.checked})}>
-                <IonLabel style={{ fontFamily: 'DM Sans', fontWeight: 600, color: '#1B3A6B' }}>Share profile with AI</IonLabel>
-              </IonToggle>
-            </IonItem>
-          </IonList>
+          <IonItem className="profile-input" lines="none">
+            <IonLabel position="stacked" style={{ color: '#6B6B6B', marginBottom: '8px' }}>Emergency Contact</IonLabel>
+            <IonInput value={profile.emergencyContact} placeholder="Name & Phone Number" onIonInput={e => updateField('emergencyContact', e.detail.value! as string)} />
+          </IonItem>
 
-          <IonButton expand="block" className="save-button" onClick={handleSave}>Save Profile</IonButton>
+          <div className="info-card">
+            <div style={{ fontSize: '20px' }}>ℹ️</div>
+            <div style={{ fontFamily: 'Plus Jakarta Sans', fontSize: '13px', color: '#6B6B6B', lineHeight: '1.5' }}>
+              Your profile data is stored only on this device and used to personalize your health analysis.
+            </div>
+          </div>
+
         </div>
       </IonContent>
     </IonPage>
