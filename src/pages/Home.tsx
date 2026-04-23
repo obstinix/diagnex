@@ -15,8 +15,17 @@ const Home: React.FC = () => {
   const [presentToast] = useIonToast();
   const history = useHistory();
 
-  const handleChipSelect = (symptom: string) => {
-    setSymptoms(prev => prev ? `${prev}, ${symptom}` : symptom);
+  const handleChipToggle = (symptom: string) => {
+    setSymptoms(prev => {
+      const lowerPrev = prev.toLowerCase();
+      const lowerSymptom = symptom.toLowerCase();
+      if (lowerPrev.includes(lowerSymptom)) {
+        const regex = new RegExp(`\\b${symptom}\\b,?\\s*`, 'gi');
+        return prev.replace(regex, '').replace(/,\s*$/, '').trim();
+      } else {
+        return prev ? `${prev}, ${symptom}` : symptom;
+      }
+    });
   };
 
   const handleAnalyze = async () => {
@@ -68,7 +77,7 @@ const Home: React.FC = () => {
           <IonCardContent>
             <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '1.5rem', marginBottom: '16px', color: 'var(--ion-color-primary)' }}>What's bothering you?</h2>
             
-            <SymptomChips onSelect={handleChipSelect} />
+            <SymptomChips symptomsText={symptoms} onToggle={handleChipToggle} />
             
             <IonTextarea
               value={symptoms}
