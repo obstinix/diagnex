@@ -1,8 +1,42 @@
+# Dependencies
+node_modules/
 node_modules
+
+# Build output
+dist/
 dist
-dist-ssr
-*.local
+build/
+.output/
+
+# Environment files
 .env
-.env.*
-!.env.example
-.netlify
+.env.local
+.env.production
+
+# Antigravity / Agent files
+.agent/
+~/
+~
+
+# Framework source (not app code)
+ionic-framework-main/
+
+# OS files
+.DS_Store
+Thumbs.db
+*.log
+
+# IDE
+.vscode/settings.json
+.idea/
+
+# Capacitor native builds
+android/
+ios/
+
+# Test artifacts
+coverage/
+*.test.js.snap
+
+# Old duplicate folders
+client/
