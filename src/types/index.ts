@@ -2,6 +2,7 @@ export interface Condition {
   name: string;
   likelihood: number;
   description: string;
+  body_system?: string;
 }
 
 export interface AnalysisResult {
@@ -9,12 +10,13 @@ export interface AnalysisResult {
   timestamp?: number;
   severity: 'low' | 'medium' | 'high' | 'critical';
   severityLabel: 'Monitor at Home' | 'See a Doctor Soon' | 'Seek Care Today' | 'Go to ER Now';
-  severityColor: '#10B981' | '#F59E0B' | '#EF4444' | '#7C3AED';
+  severityColor: '#10B981' | '#F59E0B' | '#F97316' | '#EF4444' | string;
   conditions: Condition[];
   recommendations: string[];
   urgencyMessage: string;
   followUpQuestions: string[];
   disclaimer: string;
+  system_matches?: string[];
 }
 
 export interface AnalyzeRequest {

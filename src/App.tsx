@@ -16,6 +16,8 @@ import Results from './pages/Results';
 import History from './pages/History';
 import DoctorFinder from './pages/DoctorFinder';
 import Profile from './pages/Profile';
+import Landing from './pages/Landing';
+import ChatBot from './components/ChatBot';
 
 import '@ionic/react/css/core.css';
 import '@ionic/react/css/normalize.css';
@@ -36,12 +38,12 @@ const App: React.FC = () => (
     <IonReactRouter>
       <IonTabs>
         <IonRouterOutlet>
+          <Route exact path="/"><Landing /></Route>
           <Route exact path="/home"><Home /></Route>
           <Route exact path="/results"><Results /></Route>
           <Route exact path="/history"><History /></Route>
           <Route exact path="/doctors"><DoctorFinder /></Route>
           <Route exact path="/profile"><Profile /></Route>
-          <Route exact path="/"><Redirect to="/home" /></Route>
         </IonRouterOutlet>
         <IonTabBar slot="bottom">
           <IonTabButton tab="home" href="/home">
@@ -67,6 +69,7 @@ const App: React.FC = () => (
         </IonTabBar>
       </IonTabs>
     </IonReactRouter>
+    <ChatBot />
   </IonApp>
 );
 

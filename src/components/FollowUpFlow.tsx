@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { IonChip, IonLabel, IonProgressBar, IonText, IonCard, IonCardContent } from '@ionic/react';
+import { IonChip, IonLabel, IonSpinner } from '@ionic/react';
 import { analyzeSymptoms } from '../services/api';
 import { AnalyzeRequest, AnalysisResult } from '../types';
 
@@ -37,21 +37,19 @@ const FollowUpFlow: React.FC<Props> = ({ questions, initialRequest, onUpdateResu
 
   if (answered) {
     return loading ? (
-      <IonCard style={{ margin: '16px 0', boxShadow: 'none', border: '1px solid var(--diagnex-border)' }}>
-        <IonCardContent>
-          <IonText color="medium"><p style={{ margin: '0 0 12px 0' }}>Re-analyzing based on your response...</p></IonText>
-          <IonProgressBar type="indeterminate" />
-        </IonCardContent>
-      </IonCard>
+      <div style={{ background: 'white', borderRadius: '16px', padding: '16px', margin: '16px 0', borderLeft: '5px solid #F59E0B', boxShadow: '0 4px 24px rgba(232,90,90,0.08)', display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <IonSpinner name="crescent" color="primary" />
+        <span style={{ fontFamily: 'Plus Jakarta Sans', color: '#1A1A1A', fontWeight: 500 }}>Re-analyzing...</span>
+      </div>
     ) : null;
   }
 
   return (
-    <div style={{ marginTop: '24px' }}>
-      <IonText color="primary"><h3 style={{ fontSize: '1rem', fontWeight: 600 }}>Follow-up Questions</h3></IonText>
+    <div style={{ background: 'white', borderRadius: '16px', padding: '16px', marginTop: '24px', borderLeft: '5px solid #F59E0B', boxShadow: '0 4px 24px rgba(232,90,90,0.08)' }}>
+      <h3 style={{ fontSize: '1rem', fontWeight: 600, color: '#1A1A1A', margin: '0 0 16px 0', fontFamily: 'Plus Jakarta Sans' }}>Follow-up Questions</h3>
       {questions.slice(0, 2).map((q, idx) => (
-        <div key={idx} style={{ marginBottom: '16px' }}>
-          <IonText><p style={{ marginBottom: '8px', fontSize: '0.95rem' }}>{q}</p></IonText>
+        <div key={idx} style={{ marginBottom: idx === 0 ? '16px' : '0' }}>
+          <p style={{ marginBottom: '12px', fontSize: '16px', fontFamily: 'Cormorant Garamond', fontStyle: 'italic', color: '#1A1A1A', margin: '0 0 12px 0' }}>{q}</p>
           <div style={{ display: 'flex', gap: '8px' }}>
             <IonChip color="primary" outline onClick={() => handleAnswer(q, 'Yes')}>
               <IonLabel>Yes</IonLabel>

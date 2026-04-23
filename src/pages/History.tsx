@@ -1,23 +1,35 @@
-import React, { useState, useEffect } from 'react';
-import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonList, IonRefresher, IonRefresherContent, IonButtons, IonButton, useIonAlert, IonCard, IonCardContent, IonIcon } from '@ionic/react';
+import React, { useState } from 'react';
+import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonList, IonRefresher, IonRefresherContent, IonButtons, IonButton, useIonAlert, IonCard, IonCardContent, IonIcon, useIonViewWillEnter } from '@ionic/react';
 import { trashOutline, timeOutline } from 'ionicons/icons';
-import { getHistory, deleteAnalysis, clearHistory } from '../services/storage';
+import { deleteAnalysis, clearHistory } from '../services/storage';
 import { AnalysisResult } from '../types';
 import HistoryItem from '../components/HistoryItem';
 import { useHistory as useRouterHistory } from 'react-router';
 
+interface HistoryEntry {
+  id: string;
+  timestamp: string;
+  symptoms: string;
+  result: AnalysisResult;
+}
+
 const History: React.FC = () => {
-  const [history, setHistory] = useState<AnalysisResult[]>([]);
+  const [entries, setEntries] = useState<HistoryEntry[]>([]);
   const [presentAlert] = useIonAlert();
   const routerHistory = useRouterHistory();
 
   const loadHistory = () => {
-    setHistory(getHistory());
+    const saved = localStorage.getItem('diagnex_history');
+    if (saved) {
+      setEntries(JSON.parse(saved));
+    } else {
+      setEntries([]);
+    }
   };
 
-  useEffect(() => {
+  useIonViewWillEnter(() => {
     loadHistory();
-  }, []);
+  });
 
   const handleRefresh = (event: CustomEvent) => {
     loadHistory();
@@ -25,8 +37,13 @@ const History: React.FC = () => {
   };
 
   const handleDelete = (id: string) => {
-    deleteAnalysis(id);
-    loadHistory();
+    const saved = localStorage.getItem('diagnex_history');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      const filtered = parsed.filter((entry: HistoryEntry) => entry.id !== id);
+      localStorage.setItem('diagnex_history', JSON.stringify(filtered));
+      loadHistory();
+    }
   };
 
   const handleClearAll = () => {
@@ -39,7 +56,7 @@ const History: React.FC = () => {
           text: 'Clear', 
           role: 'destructive', 
           handler: () => {
-            clearHistory();
+            localStorage.removeItem('diagnex_history');
             loadHistory();
           }
         }
@@ -47,44 +64,47 @@ const History: React.FC = () => {
     });
   };
 
-  const handleItemClick = (item: AnalysisResult) => {
-    routerHistory.push({ pathname: '/results', state: { result: item, request: { symptoms: 'Historical data' } } });
+  const handleItemClick = (entry: HistoryEntry) => {
+    localStorage.setItem('diagnex_last_result', JSON.stringify(entry.result));
+    routerHistory.push('/results');
   };
 
   return (
     <IonPage>
-      <IonHeader>
-        <IonToolbar>
-          <IonTitle style={{ fontFamily: 'var(--font-display)', fontWeight: 700 }}>History</IonTitle>
+      <IonHeader className="ion-no-border">
+        <IonToolbar style={{ '--background': 'var(--accent-strong)' }}>
+          <IonTitle style={{ fontFamily: 'var(--font-display)', fontWeight: 700, color: 'white' }}>History</IonTitle>
           <IonButtons slot="end">
-            {history.length > 0 && (
-              <IonButton color="danger" onClick={handleClearAll}>
-                <IonIcon slot="icon-only" icon={trashOutline} />
+            {entries.length > 0 && (
+              <IonButton fill="outline" style={{ color: 'white', borderColor: 'white', marginRight: '8px' }} onClick={handleClearAll}>
+                Clear All
               </IonButton>
             )}
           </IonButtons>
         </IonToolbar>
       </IonHeader>
-      <IonContent fullscreen>
+      <IonContent fullscreen style={{ '--background': 'var(--bg-primary)' }}>
         <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
           <IonRefresherContent />
         </IonRefresher>
 
-        {history.length === 0 ? (
-          <IonCard className="ion-margin ion-text-center" style={{ marginTop: '40px', background: 'transparent', boxShadow: 'none', border: 'none' }}>
-            <IonCardContent>
-              <IonIcon icon={timeOutline} style={{ fontSize: '64px', color: 'var(--ion-color-medium)', marginBottom: '16px' }} />
-              <h2 style={{ fontSize: '1.2rem', fontWeight: 600, color: 'var(--ion-text-color)' }}>No analyses yet</h2>
-              <p style={{ color: 'var(--ion-color-medium)' }}>Save your results to view them here.</p>
-            </IonCardContent>
-          </IonCard>
-        ) : (
-          <IonList>
-            {history.map(item => (
-              <HistoryItem key={item.id!} item={item} onDelete={handleDelete} onClick={handleItemClick} />
-            ))}
-          </IonList>
-        )}
+        <div style={{ padding: '8px 0' }}>
+          {entries.length === 0 ? (
+            <IonCard className="ion-margin ion-text-center animate-in" style={{ marginTop: '40px', background: 'transparent', boxShadow: 'none', border: 'none' }}>
+              <IonCardContent>
+                <IonIcon icon={timeOutline} style={{ fontSize: '64px', color: 'var(--ion-color-medium)', marginBottom: '16px' }} />
+                <h2 style={{ fontSize: '1.2rem', fontWeight: 600, color: 'var(--ion-text-color)', fontFamily: 'Plus Jakarta Sans' }}>No analyses yet</h2>
+                <p style={{ color: 'var(--ion-color-medium)', fontFamily: 'Plus Jakarta Sans' }}>Save your results to view them here.</p>
+              </IonCardContent>
+            </IonCard>
+          ) : (
+            <IonList style={{ background: 'transparent' }} lines="none">
+              {entries.map(entry => (
+                <HistoryItem key={entry.id} entry={entry} onDelete={handleDelete} onClick={handleItemClick} />
+              ))}
+            </IonList>
+          )}
+        </div>
       </IonContent>
     </IonPage>
   );
