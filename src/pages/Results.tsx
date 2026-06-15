@@ -7,6 +7,7 @@ import ConditionCard from '../components/ConditionCard';
 import FollowUpFlow from '../components/FollowUpFlow';
 import { saveAnalysis } from '../services/storage';
 import DownloadReportButton from '../components/DownloadReportButton';
+import VitalsCard from '../components/VitalsCard';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement, RadialLinearScale, PointElement, LineElement, Filler } from 'chart.js';
 import { Bar, Doughnut, Radar } from 'react-chartjs-2';
 
@@ -170,6 +171,15 @@ const Results: React.FC = () => {
             {result.disclaimer}
           </p>
         </div>
+
+        {/* VITALS DISPLAY — only show if any biometric was submitted */}
+        {(request.bpm || request.bodyTemp || request.spo2) && (
+          <VitalsCard
+            bpm={request.bpm}
+            temp={request.bodyTemp}
+            spo2={request.spo2}
+          />
+        )}
 
         {/* CHARTS */}
         <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.2rem', fontWeight: 700, marginBottom: '16px', color: 'var(--text-primary)' }}>Visual Insights</h3>
