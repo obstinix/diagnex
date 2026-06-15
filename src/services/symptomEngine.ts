@@ -93,7 +93,13 @@ const SYNONYM_MAP: Record<string, string> = {
   "throwing up": "vomiting", "cant breathe": "shortness of breath", "tired": "fatigue", "dizzy": "dizziness", "runny nose": "nasal congestion",
   "racing heart": "rapid heartbeat", "yellow eyes": "jaundice", "muscle ache": "muscle pain", "head hurts": "headache", "chest hurts": "chest pain",
   "sad": "depression", "nervous": "anxiety", "can't sleep": "insomnia", "suicide": "suicidal thoughts", "kill myself": "suicidal thoughts",
-  "stiff neck": "stiff neck", "bullseye rash": "bullseye rash", "eye pain": "eye pain"
+  "stiff neck": "stiff neck", "bullseye rash": "bullseye rash", "eye pain": "eye pain",
+  "high fever": "fever high temperature",
+  "racing pulse": "rapid heartbeat",
+  "fast heartbeat": "tachycardia rapid heartbeat",
+  "slow pulse": "bradycardia slow heartbeat",
+  "low oxygen": "shortness of breath low oxygen hypoxia",
+  "cant breathe well": "shortness of breath"
 };
 
 export const analyzeSymptoms = async (symptoms: string, profile: any = {}): Promise<AnalysisResult> => {
@@ -107,6 +113,17 @@ export const analyzeSymptoms = async (symptoms: string, profile: any = {}): Prom
     for (const [synonym, standard] of Object.entries(SYNONYM_MAP)) {
       text = text.replace(new RegExp(synonym, 'g'), standard);
     }
+
+    // ─── VITALS-TO-TEXT INJECTION ──────────────────────────────────────────────
+    const bodyTemp = parseFloat(profile?.bodyTemp) || 0;
+    const bpm      = parseInt(profile?.bpm)        || 0;
+    const spo2     = parseInt(profile?.spo2)        || 0;
+
+    if (bodyTemp >= 100.4) text += ' fever high temperature';
+    if (bpm >= 100)        text += ' rapid heartbeat palpitations tachycardia';
+    if (bpm > 0 && bpm <= 50) text += ' slow heartbeat bradycardia dizziness fatigue';
+    if (spo2 > 0 && spo2 <= 95) text += ' shortness of breath low oxygen hypoxia';
+    // ─────────────────────────────────────────────────────────────────────────────
 
     let matchedKeywords = new Set<string>();
     const conditionScores = CONDITIONS_DB.map(condition => {
@@ -134,7 +151,37 @@ export const analyzeSymptoms = async (symptoms: string, profile: any = {}): Prom
     if (text.includes('changing mole') || text.includes('asymmetric lesion')) severityScore += 50; // Melanoma combo
     
     if (profile?.age && parseInt(profile.age) > 60) severityScore += 10;
-    
+
+    // ─── PAIN LEVEL AMPLIFIER ──────────────────────────────────────────────────
+    const painLevel = parseInt(profile?.painLevel) || 0;
+    if (painLevel >= 9) severityScore += 20;
+    else if (painLevel >= 7) severityScore += 10;
+    else if (painLevel >= 5) severityScore += 5;
+
+    // Self-reported severity scale
+    if (profile?.severityScale === 'severe') severityScore += 10;
+    else if (profile?.severityScale === 'moderate') severityScore += 5;
+
+    // ─── VITALS SCORING ────────────────────────────────────────────────────────
+    // Temperature
+    if      (bodyTemp > 0 && bodyTemp < 95)   severityScore += 30; // hypothermia
+    else if (bodyTemp >= 103)                 severityScore += 20; // high fever
+    else if (bodyTemp >= 101)                 severityScore += 10; // moderate fever
+    else if (bodyTemp >= 100.4)               severityScore += 5;  // low-grade fever
+
+    // Heart rate
+    if      (bpm > 0 && bpm <= 40)            severityScore += 30; // severe bradycardia
+    else if (bpm > 0 && bpm <= 50)            severityScore += 15; // bradycardia
+    else if (bpm >= 150)                      severityScore += 25; // severe tachycardia
+    else if (bpm >= 120)                      severityScore += 15; // tachycardia
+    else if (bpm >= 100)                      severityScore += 8;  // mild tachycardia
+
+    // Blood oxygen
+    if      (spo2 > 0 && spo2 <= 88)         severityScore += 40; // critical hypoxia
+    else if (spo2 > 0 && spo2 <= 92)         severityScore += 25; // severe hypoxia
+    else if (spo2 > 0 && spo2 <= 95)         severityScore += 10; // mild hypoxia
+    // ───────────────────────────────────────────────────────────────────────────
+
     let severity: 'low' | 'medium' | 'high' | 'critical' = 'low';
     if (severityScore >= 51) severity = 'critical';
     else if (severityScore >= 31) severity = 'high';
