@@ -5,11 +5,16 @@ import SymptomChips from '../components/SymptomChips';
 import { analyzeSymptoms } from '../services/symptomEngine';
 import { useHistory } from 'react-router';
 import { getProfile } from '../services/storage';
+import { AnalyzeRequest } from '../types';
+import VitalsCard from '../components/VitalsCard';
 
 const Home: React.FC = () => {
   const [symptoms, setSymptoms] = useState('');
   const [painLevel, setPainLevel] = useState<number>(1);
   const [severityScale, setSeverityScale] = useState('mild');
+  const [bodyTemp, setBodyTemp] = useState<string>('');
+  const [bpm,      setBpm]      = useState<string>('');
+  const [spo2,     setSpo2]     = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [present] = useIonToast();
   const router = useIonRouter();
@@ -37,27 +42,52 @@ const Home: React.FC = () => {
 
     try {
       const profileRaw = localStorage.getItem('diagnex_profile');
-      const profile = profileRaw ? JSON.parse(profileRaw) : {};
+      const profile    = profileRaw ? JSON.parse(profileRaw) : {};
 
-      const result = await analyzeSymptoms(symptoms.trim(), profile);
+      const profileWithInputs = {
+        ...profile,
+        painLevel,
+        severityScale,
+        bodyTemp: bodyTemp ? parseFloat(bodyTemp) : undefined,
+        bpm:      bpm      ? parseInt(bpm)        : undefined,
+        spo2:     spo2     ? parseInt(spo2)       : undefined,
+      };
+
+      const result = await analyzeSymptoms(symptoms.trim(), profileWithInputs);
 
       if (!result) throw new Error('Engine returned null');
 
       const resultWithMeta = {
         ...result,
         patientProfile: profile,
-        analyzedAt: new Date().toISOString(),
-        symptomsText: symptoms.trim()
+        analyzedAt:     new Date().toISOString(),
+        symptomsText:   symptoms.trim(),
       };
 
+      // Save result
       localStorage.setItem('diagnex_last_result', JSON.stringify(resultWithMeta));
 
+      // Save request (BUG-1 fix)
+      const requestObject: AnalyzeRequest = {
+        symptoms:   symptoms.trim(),
+        age:        profile.age,
+        gender:     profile.gender,
+        medications: profile.medications,
+        allergies:  profile.allergies,
+        bodyTemp:   bodyTemp ? parseFloat(bodyTemp) : undefined,
+        bpm:        bpm      ? parseInt(bpm)        : undefined,
+        spo2:       spo2     ? parseInt(spo2)       : undefined,
+        profile:    profileWithInputs,
+      };
+      localStorage.setItem('diagnex_last_request', JSON.stringify(requestObject));
+
+      // Save history
       const hist = JSON.parse(localStorage.getItem('diagnex_history') || '[]');
       hist.unshift({
-        id: Date.now().toString(),
+        id:        Date.now().toString(),
         timestamp: new Date().toISOString(),
-        symptoms: symptoms.trim(),
-        result: resultWithMeta
+        symptoms:  symptoms.trim(),
+        result:    resultWithMeta,
       });
       localStorage.setItem('diagnex_history', JSON.stringify(hist.slice(0, 20)));
 
@@ -187,6 +217,100 @@ const Home: React.FC = () => {
                   <IonSegmentButton value="moderate"><IonLabel>Moderate</IonLabel></IonSegmentButton>
                   <IonSegmentButton value="severe"><IonLabel>Severe</IonLabel></IonSegmentButton>
                 </IonSegment>
+              </div>
+
+              {/* VITALS INPUTS */}
+              <div style={{ marginBottom: '20px' }}>
+                <div style={{
+                  fontFamily: 'Plus Jakarta Sans', fontSize: '11px', fontWeight: 700,
+                  letterSpacing: '1.5px', color: 'rgba(26,26,26,0.45)',
+                  textTransform: 'uppercase', marginBottom: '12px',
+                  borderLeft: '3px solid #E85A5A', paddingLeft: '8px',
+                }}>
+                  Biometrics (optional)
+                </div>
+
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  {/* BPM */}
+                  <div style={{ flex: 1 }}>
+                    <label style={{ fontFamily: 'Plus Jakarta Sans', fontSize: '12px', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
+                      Heart Rate (BPM)
+                    </label>
+                    <input
+                      type="number"
+                      inputMode="numeric"
+                      placeholder="e.g. 72"
+                      min={20} max={300}
+                      value={bpm}
+                      onChange={e => setBpm(e.target.value)}
+                      style={{
+                        width: '100%', padding: '10px 12px', borderRadius: '12px',
+                        border: '1.5px solid #F0D6DA', fontFamily: 'JetBrains Mono, monospace',
+                        fontSize: '14px', color: '#1A1A1A', background: 'white',
+                        outline: 'none', boxSizing: 'border-box',
+                      }}
+                      onFocus={e => (e.target.style.borderColor = '#E85A5A')}
+                      onBlur={e  => (e.target.style.borderColor = '#F0D6DA')}
+                    />
+                  </div>
+
+                  {/* TEMPERATURE */}
+                  <div style={{ flex: 1 }}>
+                    <label style={{ fontFamily: 'Plus Jakarta Sans', fontSize: '12px', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
+                      Temperature (°F)
+                    </label>
+                    <input
+                      type="number"
+                      inputMode="decimal"
+                      placeholder="e.g. 98.6"
+                      min={90} max={110} step={0.1}
+                      value={bodyTemp}
+                      onChange={e => setBodyTemp(e.target.value)}
+                      style={{
+                        width: '100%', padding: '10px 12px', borderRadius: '12px',
+                        border: '1.5px solid #F0D6DA', fontFamily: 'JetBrains Mono, monospace',
+                        fontSize: '14px', color: '#1A1A1A', background: 'white',
+                        outline: 'none', boxSizing: 'border-box',
+                      }}
+                      onFocus={e => (e.target.style.borderColor = '#E85A5A')}
+                      onBlur={e  => (e.target.style.borderColor = '#F0D6DA')}
+                    />
+                  </div>
+
+                  {/* SpO2 */}
+                  <div style={{ flex: 1 }}>
+                    <label style={{ fontFamily: 'Plus Jakarta Sans', fontSize: '12px', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
+                      SpO₂ (%)
+                    </label>
+                    <input
+                      type="number"
+                      inputMode="numeric"
+                      placeholder="e.g. 98"
+                      min={70} max={100}
+                      value={spo2}
+                      onChange={e => setSpo2(e.target.value)}
+                      style={{
+                        width: '100%', padding: '10px 12px', borderRadius: '12px',
+                        border: '1.5px solid #F0D6DA', fontFamily: 'JetBrains Mono, monospace',
+                        fontSize: '14px', color: '#1A1A1A', background: 'white',
+                        outline: 'none', boxSizing: 'border-box',
+                      }}
+                      onFocus={e => (e.target.style.borderColor = '#E85A5A')}
+                      onBlur={e  => (e.target.style.borderColor = '#F0D6DA')}
+                    />
+                  </div>
+                </div>
+
+                {/* live preview — only show if any value is entered */}
+                {(bpm || bodyTemp || spo2) && (
+                  <div style={{ marginTop: '12px' }}>
+                    <VitalsCard
+                      bpm={bpm      ? parseInt(bpm)        : undefined}
+                      temp={bodyTemp ? parseFloat(bodyTemp) : undefined}
+                      spo2={spo2     ? parseInt(spo2)       : undefined}
+                    />
+                  </div>
+                )}
               </div>
 
               <IonButton className="analyze-button" expand="block" disabled={isLoading} onClick={handleAnalyze}>
