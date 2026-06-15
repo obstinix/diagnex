@@ -7,11 +7,13 @@ interface Props {
 }
 
 const SYMPTOM_CATEGORIES = [
-  { name: 'Common', chips: ['Fever', 'Headache', 'Fatigue', 'Nausea', 'Cough', 'Sore Throat'] },
-  { name: 'Pain', chips: ['Chest Pain', 'Back Pain', 'Stomach Pain', 'Joint Pain'] },
-  { name: 'Respiratory', chips: ['Shortness of Breath', 'Wheezing', 'Runny Nose'] },
-  { name: 'Digestive', chips: ['Vomiting', 'Diarrhea', 'Bloating', 'Heartburn'] },
-  { name: 'Other', chips: ['Dizziness', 'Rash', 'Palpitations'] }
+  { name: 'Common',      chips: ['Fever', 'Headache', 'Fatigue', 'Nausea', 'Cough', 'Sore Throat', 'Chills', 'Night Sweats'] },
+  { name: 'Pain',        chips: ['Chest Pain', 'Back Pain', 'Stomach Pain', 'Joint Pain', 'Muscle Pain'] },
+  { name: 'Cardiac',     chips: ['Rapid Heartbeat', 'Palpitations', 'Irregular Heartbeat', 'Low Blood Pressure'] },
+  { name: 'Respiratory', chips: ['Shortness of Breath', 'Wheezing', 'Runny Nose', 'Difficulty Breathing'] },
+  { name: 'Digestive',   chips: ['Vomiting', 'Diarrhea', 'Bloating', 'Heartburn', 'Loss of Appetite'] },
+  { name: 'Neuro',       chips: ['Dizziness', 'Confusion', 'Numbness', 'Vision Problems', 'Balance Issues'] },
+  { name: 'Skin',        chips: ['Rash', 'Jaundice', 'Pale Skin', 'Swelling'] },
 ];
 
 const SymptomChips: React.FC<Props> = ({ symptomsText, onToggle }) => {
