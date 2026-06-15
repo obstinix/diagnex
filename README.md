@@ -1,18 +1,11 @@
 <div align="center">
 
-```
-██████╗ ██╗ █████╗  ██████╗ ███╗   ██╗███████╗██╗  ██╗
-██╔══██╗██║██╔══██╗██╔════╝ ████╗  ██║██╔════╝╚██╗██╔╝
-██║  ██║██║███████║██║  ███╗██╔██╗ ██║█████╗   ╚███╔╝
-██║  ██║██║██╔══██║██║   ██║██║╚██╗██║██╔══╝   ██╔██╗
-██████╔╝██║██║  ██║╚██████╔╝██║ ╚████║███████╗██╔╝ ██╗
-╚═════╝ ╚═╝╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝╚═╝  ╚═╝
-```
+# 🩺 Diagnex
 
 ### *Know what your body is telling you — instantly.*
 
 AI-powered symptom analysis · 57 conditions across 9 body systems · Biometric vitals engine  
-Real-time severity triage · Offline-capable · Zero backend · 100% private
+Real-time severity triage · Downloadable clinical PDF reports · Offline-capable · Zero backend · 100% private
 
 ---
 
@@ -52,22 +45,25 @@ Real-time severity triage · Offline-capable · Zero backend · 100% private
    - [Dermatological](#49-dermatological-4-conditions)
 5. [Biometric Vitals Engine](#5-biometric-vitals-engine)
 6. [Symptom Analysis Algorithm](#6-symptom-analysis-algorithm)
-7. [System Architecture](#7-system-architecture)
-8. [Tech Stack](#8-tech-stack)
-9. [Getting Started](#9-getting-started)
-   - [Prerequisites](#91-prerequisites)
-   - [Clone the Repository](#92-clone-the-repository)
-   - [Install Dependencies](#93-install-dependencies)
-   - [Environment Configuration](#94-environment-configuration)
-   - [Run Locally](#95-run-locally)
-   - [Build for Production](#96-build-for-production)
-   - [Deploy to Cloudflare Pages](#97-deploy-to-cloudflare-pages)
-   - [Native Mobile Build (Capacitor)](#98-native-mobile-build-capacitor)
-10. [Project Structure](#10-project-structure)
-11. [Interactive Features Guide](#11-interactive-features-guide)
-12. [Contributing](#12-contributing)
-13. [License](#13-license)
-14. [Medical Disclaimer](#14-medical-disclaimer)
+7. [Emergency Detection System](#7-emergency-detection-system)
+8. [PDF Clinical Report](#8-pdf-clinical-report)
+9. [Find Nearest Care](#9-find-nearest-care)
+10. [System Architecture](#10-system-architecture)
+11. [Tech Stack](#11-tech-stack)
+12. [Getting Started](#12-getting-started)
+    - [Prerequisites](#121-prerequisites)
+    - [Clone the Repository](#122-clone-the-repository)
+    - [Install Dependencies](#123-install-dependencies)
+    - [Environment Configuration](#124-environment-configuration)
+    - [Run Locally](#125-run-locally)
+    - [Build for Production](#126-build-for-production)
+    - [Deploy to Cloudflare Pages](#127-deploy-to-cloudflare-pages)
+    - [Native Mobile Build (Capacitor)](#128-native-mobile-build-capacitor)
+13. [Project Structure](#13-project-structure)
+14. [Interactive Features Guide](#14-interactive-features-guide)
+15. [Contributing](#15-contributing)
+16. [License](#16-license)
+17. [Medical Disclaimer](#17-medical-disclaimer)
 
 ---
 
@@ -75,7 +71,9 @@ Real-time severity triage · Offline-capable · Zero backend · 100% private
 
 Diagnex is a fully client-side, privacy-first medical symptom analysis engine built on Ionic React. It implements a weighted keyword-scoring model over a curated database of 57 conditions spanning 9 body systems, combined with a biometric vitals scoring layer that adjusts severity in response to real patient readings (heart rate, body temperature, SpO₂). All computation runs entirely in the browser — no telemetry, no backend calls, no account required.
 
-The engine tokenises free-text symptom input, resolves 50+ colloquial synonym mappings to clinical terminology, scores each condition by keyword overlap weighted against condition-specific priors, applies biometric adjustments and emergency-combo detection, and outputs a 4-tier severity classification (Low → Medium → High → Critical) with matched conditions, ranked recommendations, and a downloadable 4-page PDF clinical report.
+The engine tokenises free-text symptom input, resolves 50+ colloquial synonym mappings to clinical terminology, scores each condition by keyword overlap weighted against condition-specific priors, applies biometric adjustments and emergency-combination detection, and outputs a 4-tier severity classification (Low → Medium → High → Critical) alongside matched conditions, ranked recommendations, and a **downloadable 4-page PDF clinical report** suitable for sharing with a healthcare provider.
+
+When critical emergency patterns are detected — such as chest pain radiating to the left arm, neck stiffness with fever, or suicidal ideation — the system immediately escalates the result, displays a high-visibility crisis banner, and provides direct guidance to emergency services. One-tap geolocation then surfaces the nearest hospitals within a 13 km radius via a Google Maps deep-link.
 
 Diagnex is designed as an educational and accessibility tool to bridge the information gap between symptom onset and clinical consultation — particularly in contexts where specialist access is delayed, expensive, or geographically unavailable.
 
@@ -93,7 +91,7 @@ Diagnex is designed as an educational and accessibility tool to bridge the infor
 | People who search symptoms before seeing a doctor | **72%** (Pew Research) |
 | Existing symptom checkers that are free, offline-capable, and private | **Near zero** |
 
-Existing consumer tools are either paywalled, cloud-dependent (sending sensitive health data to third parties), or use alarmist language that drives unnecessary emergency visits. Diagnex is the alternative: instant, private, on-device analysis with clinically structured output.
+Existing consumer tools are either paywalled, cloud-dependent (sending sensitive health data to third parties), or use alarmist language that drives unnecessary emergency visits. Diagnex is the alternative: instant, private, on-device analysis with clinically structured output — including a shareable clinical report you can hand to any doctor, and automatic escalation when something truly urgent is detected.
 
 ---
 
@@ -101,21 +99,22 @@ Existing consumer tools are either paywalled, cloud-dependent (sending sensitive
 
 | # | Feature | Description |
 |---|---|---|
-| 01 | **Symptom Engine** | Weighted keyword scoring across 57 conditions with synonym resolution and emergency-combo detection |
-| 02 | **4-Level Severity Triage** | `Low` → `Medium` → `High` → `Critical` with colour-coded urgency banners and real-time pulsing for critical states |
+| 01 | **Symptom Engine** | Weighted keyword scoring across 57 conditions with synonym resolution and emergency-combination detection |
+| 02 | **4-Level Severity Triage** | `Low` → `Medium` → `High` → `Critical` with colour-coded urgency banners and real-time pulsing animation for critical states |
 | 03 | **Biometric Vitals Engine** | BPM, body temperature (°F), and SpO₂ inputs directly adjust severity scoring and feed the keyword matcher |
-| 04 | **Visual Analytics** | Horizontal bar chart (condition likelihood), radar chart (affected body systems), and semicircular risk gauge — powered by Chart.js 4 |
-| 05 | **4-Page PDF Report** | Professional clinical report with patient demographics, embedded charts, ranked conditions, QR code, and `CONFIDENTIAL` watermark |
-| 06 | **Pain Scale & Severity Input** | 1–10 pain slider and mild/moderate/severe segment both contribute to severity scoring |
-| 07 | **Symptom Chip Grid** | 40+ quick-tap chips across 7 categorised body-system groups (Common, Pain, Cardiac, Respiratory, Digestive, Neuro, Skin) |
-| 08 | **Floating AI Chatbot** | On-page assistant with 10 intent categories, 600–900 ms simulated typing, emergency escalation on `chest pain` / `suicidal` keywords |
-| 09 | **Patient Profile** | Persisted name, age, gender, blood type, medications, allergies, and emergency contact — embedded into every analysis and PDF |
-| 10 | **Analysis History** | Up to 20 analyses stored in `localStorage`, swipe-to-delete, tap-to-reload on Results page |
-| 11 | **Find Nearest Care** | One-tap HTML5 Geolocation → Google Maps deep-link to hospitals within 13 km radius |
-| 12 | **Share Results** | Web Share API on mobile (native share sheet), clipboard fallback on desktop |
-| 13 | **100% Private** | Zero backend, zero database, zero telemetry. All data lives in `localStorage` on the user's device |
-| 14 | **PWA / Offline** | Service-worker enabled, installable on any device, works offline after first load |
-| 15 | **Native Mobile** | Capacitor 5 wrapping for Android and iOS native builds (`com.diagnex.app`) |
+| 04 | **🚨 Emergency Detection** | Six high-risk symptom combinations (heart attack, stroke, meningitis, melanoma, TB, crisis) trigger an immediate severity escalation and real-time emergency guidance |
+| 05 | **🏥 Find Nearest Care** | One-tap HTML5 Geolocation opens a Google Maps deep-link surfacing hospitals and clinics within a 13 km radius |
+| 06 | **📄 Downloadable PDF Report** | Professional 4-page clinical report with embedded charts, patient demographics, QR code, and CONFIDENTIAL watermark — ready to share with any healthcare provider |
+| 07 | **Visual Analytics** | Horizontal bar chart (condition likelihood), radar chart (affected body systems), and semicircular risk gauge — powered by Chart.js 4 |
+| 08 | **Pain Scale & Severity Input** | 1–10 pain slider and mild/moderate/severe segment both contribute to the severity scoring model |
+| 09 | **Symptom Chip Grid** | 40+ quick-tap chips across 7 categorised body-system groups (Common, Pain, Cardiac, Respiratory, Digestive, Neuro, Skin) |
+| 10 | **Floating AI Chatbot** | On-page assistant with 10 intent categories, 600–900 ms simulated typing delay, and automatic emergency escalation on critical keywords |
+| 11 | **Patient Profile** | Persisted name, age, gender, blood type, medications, allergies, and emergency contact — embedded into every analysis and PDF |
+| 12 | **Analysis History** | Up to 20 analyses stored in `localStorage`, swipe-to-delete, tap-to-reload on the Results page |
+| 13 | **Share Results** | Web Share API on mobile (native share sheet), clipboard fallback on desktop |
+| 14 | **100% Private** | Zero backend, zero database, zero telemetry. All data lives in `localStorage` on the user's device |
+| 15 | **PWA / Offline** | Service-worker enabled, installable on any device, works offline after first load |
+| 16 | **Native Mobile** | Capacitor 5 wrapping for Android and iOS native builds (`com.diagnex.app`) |
 
 ---
 
@@ -169,7 +168,7 @@ Diagnex analyses symptoms against **57 clinically curated conditions** across 9 
 | **Pericarditis** | Sharp chest pain, fever, shortness of breath, fatigue | High | 3× |
 | **Peripheral Artery Disease** | Leg pain, cold legs/feet, weak pulse in legs, non-healing sores | High | 3× |
 
-**Heart Attack** — Acute coronary syndrome from plaque rupture and thrombosis occluding a coronary artery. Classic presentation: crushing substernal chest pain radiating to the left arm and jaw. Emergency detector: `chest pain` + `left arm` combination triggers +50 severity points.
+**Heart Attack** — Acute coronary syndrome from plaque rupture and thrombosis occluding a coronary artery. Classic presentation: crushing substernal chest pain radiating to the left arm and jaw. Emergency detector: `chest pain` + `left arm` combination triggers +50 severity points and immediate escalation.
 
 **Pulmonary Embolism** — Thrombus occlusion of pulmonary artery; risk stratified by Wells score. Classic triad: dyspnoea, pleuritic chest pain, haemoptysis. High mortality if untreated.
 
@@ -210,7 +209,7 @@ Diagnex analyses symptoms against **57 clinically curated conditions** across 9 
 
 **Lyme Disease** — *Borrelia burgdorferi* spirochaete transmitted by *Ixodes* tick; erythema migrans (bullseye rash) is the pathognomonic early sign. Late dissemination involves cardiac and neurological systems.
 
-**Meningitis** — Bacterial (*N. meningitidis*, *S. pneumoniae*) or viral inflammation of meninges. Classic triad: headache, neck stiffness (Kernig/Brudzinski positive), photophobia. Emergency detector: `stiff neck` + `headache` + `fever` triggers +50 severity points.
+**Meningitis** — Bacterial (*N. meningitidis*, *S. pneumoniae*) or viral inflammation of meninges. Classic triad: headache, neck stiffness (Kernig/Brudzinski positive), photophobia. Emergency detector: `stiff neck` + `headache` + `fever` triggers +50 severity points and crisis escalation.
 
 **Chickenpox** — Primary varicella-zoster virus infection; highly contagious airborne transmission. Prodromal fever followed by centripetal vesicular rash. Reactivation causes shingles.
 
@@ -290,7 +289,7 @@ Diagnex analyses symptoms against **57 clinically curated conditions** across 9 
 | **Eating Disorder** | Extreme food restriction, binge eating, purging, distorted body image, rapid weight change | High | 3× |
 | **ADHD** | Difficulty focusing, hyperactivity, impulsivity, forgetfulness, disorganisation | Medium | 2× |
 
-> **Suicidal ideation detector:** The keyword `suicid` or `kill myself` triggers an immediate +100 severity score and escalates the chatbot to a crisis response with emergency service instructions.
+> **Suicidal ideation detector:** The keyword `suicid` or `kill myself` triggers an immediate +100 severity score, escalates the chatbot to a crisis response with emergency service instructions, and presents urgent mental health resources. See [Emergency Detection System](#7-emergency-detection-system) for full details.
 
 **PTSD** — DSM-5 criteria require trauma exposure plus intrusion, avoidance, negative cognition, and hyperarousal clusters for >1 month. Trauma-focused CBT and EMDR are evidence-based.
 
@@ -300,7 +299,7 @@ Diagnex analyses symptoms against **57 clinically curated conditions** across 9 
 
 **Eating Disorder** — Includes AN (restriction, BMI < 17.5), BN (binge-purge cycles), and BED. Highest mortality rate of any psychiatric condition; multidisciplinary management required.
 
-**ADHD** — Inattentive, hyperactive-impulsive, or combined presentations; DSMST scores on Conners/Vanderbilt scales. Stimulants (methylphenidate, amphetamines) are first-line pharmacotherapy.
+**ADHD** — Inattentive, hyperactive-impulsive, or combined presentations; scores on Conners/Vanderbilt scales. Stimulants (methylphenidate, amphetamines) are first-line pharmacotherapy.
 
 ---
 
@@ -456,7 +455,7 @@ spo2 ≤ 95%      →  appends "shortness of breath low oxygen hypoxia"
   ┌──────────────────────────────────────┐
   │  4. SEVERITY SCORING                 │
   │     base = matchedKeywords.size × 5  │
-  │     + emergency combos (see below)   │
+  │     + emergency combos (see §7)      │
   │     + biometric adjustments          │
   │     + age > 60 → +10                 │
   │     + painLevel adjustments          │
@@ -487,17 +486,6 @@ spo2 ≤ 95%      →  appends "shortness of breath low oxygen hypoxia"
   }
 ```
 
-### Emergency Combination Detectors
-
-| Combination | Added Score | Target Condition |
-|---|---|---|
-| `chest pain` + `left arm` | +50 | Heart Attack |
-| `drooping` + `weakness` | +50 | Stroke |
-| `coughing blood` | +50 | TB / Pulmonary Embolism |
-| `stiff neck` + `headache` + `fever` | +50 | Meningitis |
-| `changing mole` or `asymmetric lesion` | +50 | Melanoma |
-| `suicid` or `kill myself` | +100 | Crisis escalation |
-
 ### Synonym Map (selected)
 
 | Colloquial Input | Resolved Clinical Term |
@@ -518,7 +506,92 @@ spo2 ≤ 95%      →  appends "shortness of breath low oxygen hypoxia"
 
 ---
 
-## 7. System Architecture
+## 7. Emergency Detection System
+
+Diagnex includes a dedicated emergency detection layer that runs in parallel with standard scoring. When high-risk symptom combinations are identified, the system bypasses the normal tier ladder — escalating directly to **Critical**, displaying a pulsing red urgency banner, and prompting the user to seek emergency care immediately.
+
+### Emergency Combination Detectors
+
+| 🚨 Combination | Score Added | Target Condition |
+|---|---|---|
+| `chest pain` + `left arm` | +50 pts | Heart Attack (STEMI/NSTEMI) |
+| `drooping` + `weakness` | +50 pts | Stroke |
+| `coughing blood` | +50 pts | TB / Pulmonary Embolism |
+| `stiff neck` + `headache` + `fever` | +50 pts | Meningitis |
+| `changing mole` or `asymmetric lesion` | +50 pts | Melanoma |
+| `suicid` or `kill myself` | +100 pts | Mental health crisis escalation |
+
+### What Happens at Critical Severity
+
+When any emergency pattern is matched or the severity score exceeds 51 points, Diagnex activates the following:
+
+- **Pulsing red severity banner** with `🚨 Go to Emergency Room Now` messaging
+- **Chatbot escalation** — the floating assistant immediately overrides its current intent flow and provides explicit emergency service instructions (call 911 / 112 / 999 / 108)
+- **Find Nearest Care shortcut** — a one-tap button surfaces the nearest emergency departments (see [§9](#9-find-nearest-care))
+- **PDF report pre-flagged** — the downloadable report is stamped with the Critical severity tier, supporting fast triage at the ER
+
+### Mental Health Crisis Response
+
+When suicidal ideation keywords are detected (`suicid`, `kill myself`), the system:
+
+- Adds +100 to the severity score, guaranteeing a Critical classification
+- Bypasses all other chatbot intent categories
+- Displays crisis helpline guidance and urges the user to call emergency services or a trusted person immediately
+
+---
+
+## 8. PDF Clinical Report
+
+After every analysis, Diagnex generates a **professional 4-page clinical PDF report** that can be downloaded, printed, or shared directly with a doctor or specialist. The report is produced entirely client-side using jsPDF and html2canvas — no data leaves the device.
+
+### Report Contents
+
+| Page | Content |
+|---|---|
+| **Page 1 — Cover** | Patient name, age, gender, blood type, current medications, known allergies, emergency contact, unique report ID, QR code linking back to Diagnex, and a `CONFIDENTIAL` watermark |
+| **Page 2 — Condition Likelihood** | Horizontal bar chart of the top 5 matched conditions with percentage likelihood scores |
+| **Page 3 — Body Systems & Risk** | Radar chart of affected body systems + semicircular risk gauge showing overall severity score |
+| **Page 4 — Recommendations** | Ranked clinical recommendations, urgency message (e.g. "Seek care today"), and legal disclaimer |
+
+### Why It Matters
+
+Most consumer symptom checkers give you a result on-screen and nothing more. Diagnex lets you walk into a clinic or emergency room with a structured, timestamped document that communicates your symptoms, vitals, and flagged conditions in a format that healthcare providers can immediately act on — closing the gap between self-assessment and professional triage.
+
+### How to Download
+
+1. Complete a symptom analysis on the home page
+2. Navigate to **Results**
+3. Tap **Download PDF Report** — the report generates in-browser and saves to your device
+
+> The PDF embeds your patient profile (name, age, blood type, medications, allergies) from the Profile page. Fill in your profile before running an analysis for a fully personalised report.
+
+---
+
+## 9. Find Nearest Care
+
+Diagnex includes a one-tap geolocation feature that instantly surfaces nearby hospitals, clinics, and emergency departments — directly from the app.
+
+### How It Works
+
+1. Navigate to the **Find Care** tab (or tap the shortcut that appears on Critical results)
+2. Tap **Find Nearest Hospitals** — the browser requests location permission
+3. Diagnex uses the HTML5 Geolocation API to determine your coordinates
+4. A pre-built Google Maps deep-link opens, filtered to healthcare facilities within a **13 km radius**
+
+### Privacy
+
+Your coordinates are passed directly to Google Maps via a URL parameter — they are never stored by Diagnex, never sent to any Diagnex backend (there isn't one), and are only used for the duration of that Maps session. Location access is entirely opt-in and can be denied at any time.
+
+### When It Activates
+
+The Find Care shortcut appears prominently in two places:
+
+- **Results page** — always visible after an analysis
+- **Critical severity banner** — prominently highlighted when emergency patterns are detected, encouraging users to act immediately
+
+---
+
+## 10. System Architecture
 
 ```
 ╔══════════════════════════════════════════════════════════════════════╗
@@ -604,7 +677,7 @@ spo2 ≤ 95%      →  appends "shortness of breath low oxygen hypoxia"
 
 ---
 
-## 8. Tech Stack
+## 11. Tech Stack
 
 ### Core Framework
 
@@ -633,9 +706,9 @@ TypeScript compiler target: **ESNext**. Module resolution: **Node**. JSX transfo
 |---|---|---|
 | `chart.js` | `^4.5.1` | Canvas-based charting engine |
 | `react-chartjs-2` | `^5.3.1` | React wrapper for Chart.js |
-| `jspdf` | `^4.2.1` | PDF generation (A4 format) |
-| `html2canvas` | `^1.4.1` | DOM-to-canvas rasterisation for PDF |
-| `qrcode` | `^1.5.4` | QR code generation for PDF reports |
+| `jspdf` | `^4.2.1` | PDF generation (A4 format, client-side) |
+| `html2canvas` | `^1.4.1` | DOM-to-canvas rasterisation for PDF chart embedding |
+| `qrcode` | `^1.5.4` | QR code generation embedded in PDF reports |
 
 ### Mobile / Native
 
@@ -688,9 +761,9 @@ App ID: `com.diagnex.app` · Web Dir: `dist`
 
 ---
 
-## 9. Getting Started
+## 12. Getting Started
 
-### 9.1 Prerequisites
+### 12.1 Prerequisites
 
 Ensure the following are installed before proceeding:
 
@@ -708,7 +781,7 @@ git --version    # Any recent version
 
 ---
 
-### 9.2 Clone the Repository
+### 12.2 Clone the Repository
 
 ```bash
 # Clone via HTTPS
@@ -730,7 +803,7 @@ ls -la
 
 ---
 
-### 9.3 Install Dependencies
+### 12.3 Install Dependencies
 
 ```bash
 npm install
@@ -747,7 +820,7 @@ npm audit fix    # auto-fix compatible vulnerabilities
 
 ---
 
-### 9.4 Environment Configuration
+### 12.4 Environment Configuration
 
 Diagnex requires no mandatory environment variables for local development. A template is provided for optional API URL configuration:
 
@@ -765,7 +838,7 @@ VITE_API_URL=http://localhost:3001
 
 ---
 
-### 9.5 Run Locally
+### 12.5 Run Locally
 
 ```bash
 npm run dev
@@ -791,7 +864,7 @@ Open **http://localhost:5173/** in your browser. Changes to any file in `src/` w
 
 ---
 
-### 9.6 Build for Production
+### 12.6 Build for Production
 
 ```bash
 # Type-check + bundle with Vite
@@ -825,7 +898,7 @@ npm run build 2>&1 | grep "kB"
 
 ---
 
-### 9.7 Deploy to Cloudflare Pages
+### 12.7 Deploy to Cloudflare Pages
 
 **Option A: GitHub Integration (Recommended)**
 
@@ -865,7 +938,7 @@ Add a `_redirects` file (already present in `public/`):
 
 ---
 
-### 9.8 Native Mobile Build (Capacitor)
+### 12.8 Native Mobile Build (Capacitor)
 
 Diagnex includes full [Capacitor 5](https://capacitorjs.com/) configuration for Android and iOS native builds.
 
@@ -892,7 +965,7 @@ App ID: `com.diagnex.app` · App Name: `Diagnex`
 
 ---
 
-## 10. Project Structure
+## 13. Project Structure
 
 ```
 diagnex/
@@ -920,7 +993,7 @@ diagnex/
 │   │   └── 📄 Profile.tsx       # Patient demographics form    → /profile
 │   │
 │   ├── 📁 components/           # Reusable UI components
-│   │   ├── 📄 ChatBot.tsx           # Floating AI chatbot widget
+│   │   ├── 📄 ChatBot.tsx           # Floating AI chatbot + emergency escalation
 │   │   ├── 📄 VitalsCard.tsx        # BPM / SpO₂ / Temp display (props-driven)
 │   │   ├── 📄 SeverityBadge.tsx     # Colour-coded severity pill
 │   │   ├── 📄 SymptomChips.tsx      # Categorised quick-tap chip grid
@@ -931,7 +1004,7 @@ diagnex/
 │   │   └── 📄 DownloadReportButton.tsx # PDF generation trigger button
 │   │
 │   ├── 📁 services/             # Business logic and data services
-│   │   ├── 📄 symptomEngine.ts  # Core analysis engine (57 conditions, vitals)
+│   │   ├── 📄 symptomEngine.ts  # Core analysis engine (57 conditions, emergency detection, vitals)
 │   │   ├── 📄 pdfReport.ts      # 4-page jsPDF report generator with charts + QR
 │   │   ├── 📄 storage.ts        # localStorage CRUD utilities
 │   │   └── 📄 geolocation.ts    # HTML5 geolocation → Google Maps deep-link
@@ -952,7 +1025,7 @@ diagnex/
 
 ---
 
-## 11. Interactive Features Guide
+## 14. Interactive Features Guide
 
 ### Symptom Chips
 
@@ -1007,9 +1080,9 @@ After the initial analysis, the engine generates 2 follow-up yes/no questions. A
 
 ---
 
-## 12. Contributing
+## 15. Contributing
 
-Contributions are warmly welcomed. Diagnex is built to be extensible — adding conditions, improving the algorithm, or refining the UI are all high-value areas.
+Contributions are warmly welcomed. Diagnex is built to be extensible — adding conditions, improving the algorithm, refining the UI, or strengthening the emergency detection layer are all high-value areas.
 
 ### Found a Bug?
 
@@ -1058,17 +1131,20 @@ git push origin feat/your-feature-name
 |---|---|
 | `symptomEngine.ts` | Add more conditions (asthma, lupus, kidney stones, endometriosis…) |
 | `symptomEngine.ts` | Expand the synonym map (more colloquial expressions) |
+| `symptomEngine.ts` | Add emergency combos for anaphylaxis and stroke (face drooping + arm weakness + speech) |
 | `SymptomChips.tsx` | Add more chips (sexual health, vision, dental) |
 | `src/theme/` | Implement dark mode toggle using CSS variables |
 | `src/pages/` | Add multilingual support (i18n) |
 | `src/services/` | Add unit tests for `symptomEngine.ts` |
 | `pdfReport.ts` | Improve chart rendering quality at high DPI |
+| `pdfReport.ts` | Add vitals graph to PDF Page 3 |
 | `VitalsCard.tsx` | Add blood pressure (systolic/diastolic) input |
+| `DoctorFinder.tsx` | Add filtering by care type (ER, GP, specialist) |
 
 ### Contribution Guidelines
 
 - Match the existing inline-style patterns and design token system
-- Use `Plus Jakarta Sans` for body text, `Cormorant Garamond` for headings, `JetBrains Mono` for numeric data
+- Use `Cormorant Garamond` for headings, `DM Sans` for body text, `JetBrains Mono` for numeric data
 - Keep components small and single-purpose
 - All TypeScript must compile with `strict: true` — no `any` escapes without justification
 - Commit one logical change per commit
@@ -1080,7 +1156,7 @@ Have an idea for a new feature?
 
 ---
 
-## 13. License
+## 16. License
 
 This project is distributed under the **Eclipse Public License 2.0 (EPL-2.0)**.
 
@@ -1108,7 +1184,7 @@ EPL-2.0 official text: [https://www.eclipse.org/legal/epl-2.0/](https://www.ecli
 
 ---
 
-## 14. Medical Disclaimer
+## 17. Medical Disclaimer
 
 > **⚠️ Diagnex is NOT a medical device and does NOT provide medical advice.**
 
