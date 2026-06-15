@@ -27,6 +27,9 @@ export interface AnalyzeRequest {
   allergies?: string;
   followUp?: string;
   profile?: any;
+  bodyTemp?: number;   // °F — e.g. 98.6
+  bpm?: number;        // beats per minute — e.g. 72
+  spo2?: number;       // SpO₂ % — e.g. 98
 }
 
 export interface PatientProfile {
